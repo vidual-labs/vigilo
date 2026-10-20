@@ -58,6 +58,14 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        // MAIL_MAILER=log writes mails here (debug level, whatever LOG_LEVEL says).
+        'mail' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/mail.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),

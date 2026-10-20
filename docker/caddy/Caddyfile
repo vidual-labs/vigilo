@@ -1,0 +1,44 @@
+# vigilo — Caddy in front of PHP-FPM.
+#
+# VIGILO_SITE_ADDRESS defaults to ":80" (plain HTTP on the host port from
+# VIGILO_HTTP_PORT). Set it to a domain (vigilo.agency.example) and map
+# ports 80/443 to get automatic Let's Encrypt certificates.
+
+{$VIGILO_SITE_ADDRESS::80} {
+	root * /app/public
+	encode zstd gzip
+
+	# Fingerprinted Vite assets never change.
+	@build path /build/*
+	header @build Cache-Control "public, max-age=31536000, immutable"
+
+	php_fastcgi app:9000
+	file_server
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+		-X-Powered-By
+	}
+
+	# Password-reset tokens travel in the URL path: keep them out of the log.
+	log {
+		output stdout
+		format filter {
+			wrap console
+			fields {
+				request>uri regexp "^/reset-password/[^?]*" "/reset-password/REDACTED"
+				request>headers>Referer regexp "/reset-password/.*$" "/reset-password/REDACTED"
+			}
+		}
+	}
+}
+
+# Internal only (not published): end-to-end healthcheck Caddy → PHP → database.
+http://:2080 {
+	root * /app/public
+	php_fastcgi app:9000
+}

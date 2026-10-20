@@ -1,0 +1,135 @@
+# vigilo — self-hosted ads watchdog.
+#
+#   cp .env.example .env
+#   docker compose up -d
+#
+# brings up postgres, app (php-fpm), queue, scheduler and caddy. The first
+# start creates the database, an operator account (password printed in
+# `docker compose logs app` unless ADMIN_PASSWORD is set) and — in mock
+# mode — demo clients. Open http://localhost:8080.
+
+name: vigilo
+
+x-app-environment: &app-environment
+  DB_CONNECTION: pgsql
+  DB_HOST: postgres
+  DB_PORT: "5432"
+
+x-app: &app
+  image: vigilo-app:${VIGILO_IMAGE_TAG:-local}
+  build:
+    context: .
+    target: app
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - storage:/app/storage
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-vigilo}
+      POSTGRES_USER: ${DB_USERNAME:-vigilo}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    # Small-VPS tuning (~512 MB for the whole stack).
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - effective_cache_size=192MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - max_connections=30
+      - -c
+      - wal_buffers=4MB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    <<: *app
+    environment:
+      <<: *app-environment
+      VIGILO_ROLE: app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 180s
+
+  queue:
+    <<: *app
+    environment:
+      <<: *app-environment
+      VIGILO_ROLE: worker
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=1", "--timeout=900", "--max-time=3600", "--memory=128"]
+    stop_grace_period: 60s
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "artisan", "vigilo:health:queue"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+
+  # Without the scheduler nothing recurring runs: no daily run, no digest.
+  scheduler:
+    <<: *app
+    environment:
+      <<: *app-environment
+      VIGILO_ROLE: worker
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "find /app/storage/framework/scheduler-heartbeat -mmin -3 | grep -q ."]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  caddy:
+    image: vigilo-web:${VIGILO_IMAGE_TAG:-local}
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    environment:
+      VIGILO_SITE_ADDRESS: ${VIGILO_SITE_ADDRESS:-:80}
+    ports:
+      - "${VIGILO_HTTP_PORT:-8080}:80"
+      - "${VIGILO_HTTPS_PORT:-8443}:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2080/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  storage:
+  caddy_data:
+  caddy_config:
