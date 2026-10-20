@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Pint · Larastan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, pcntl, pdo_pgsql, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Pint
+        run: vendor/bin/pint --test
+
+      - name: Larastan
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+  test:
+    name: Pest (PHP 8.4)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, pcntl, pdo_pgsql, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # phpunit.xml forces the whole test environment (in-memory SQLite, …).
+      - name: Tests
+        run: |
+          cp .env.example .env
+          php artisan test --compact
+
+  docker:
+    name: Docker Compose install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Fresh install (cp .env.example .env && docker compose up -d)
+        run: |
+          cp .env.example .env
+          docker compose up -d --build --wait --wait-timeout 600
+
+      - name: All services healthy
+        run: docker compose ps
+
+      - name: First operator was created with a generated password
+        run: docker compose logs app | grep -q "first operator account"
+
+      - name: Web server answers through Caddy
+        run: |
+          curl -fsS -o /dev/null http://localhost:8080/up
+          curl -fsS http://localhost:8080/login | grep -q "vigilo"
+
+      - name: Tests inside the app container
+        run: docker compose exec -T app php artisan test --compact
+
+      - name: Live data untouched by the tests
+        run: |
+          clients=$(docker compose exec -T app php artisan tinker --execute='echo App\Models\Client::count();')
+          echo "demo clients after the test run: $clients"
+          test "$clients" = "7"
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200

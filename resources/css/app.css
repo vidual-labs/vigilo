@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+
+@source '../views';
+@source '../../app';
+
+/* Dark mode follows the `dark` class on <html> (set before first paint, see layouts). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /* System fonts only: no third-party font requests from a GDPR-sensitive tool. */
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Shared building blocks, as utilities so they can build on each other. */
+@utility v-input {
+    @apply block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-800/60;
+}
+
+@utility v-label {
+    @apply mb-1 block text-xs font-medium tracking-wide text-slate-600 uppercase dark:text-slate-400;
+}
+
+@utility v-btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition focus:ring-2 focus:ring-teal-500/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility v-btn-primary {
+    @apply v-btn bg-teal-700 text-white hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-500;
+}
+
+@utility v-btn-secondary {
+    @apply v-btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+}
+
+@utility v-btn-danger {
+    @apply v-btn bg-rose-600 text-white hover:bg-rose-700;
+}
+
+@utility v-btn-ghost {
+    @apply v-btn px-2 py-1 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
+}
+
+@utility v-card {
+    @apply rounded-lg border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900;
+}
+
+@utility v-table {
+    @apply min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800;
+
+    & th {
+        @apply px-3 py-2 text-left text-xs font-medium tracking-wide whitespace-nowrap text-slate-500 uppercase dark:text-slate-400;
+    }
+
+    & td {
+        @apply px-3 py-2.5 align-top;
+    }
+}
+
+@utility v-badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap;
+}

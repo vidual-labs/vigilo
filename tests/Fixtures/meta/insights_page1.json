@@ -1,0 +1,6 @@
+{
+  "data": [
+    {"campaign_id": "2385011", "campaign_name": "Leads | Entscheider DACH", "spend": "84.37", "impressions": "10233", "clicks": "121", "actions": [{"action_type": "link_click", "value": "121"}, {"action_type": "lead", "value": "4"}, {"action_type": "onsite_conversion.lead_grouped", "value": "4"}], "date_start": "2026-10-18", "date_stop": "2026-10-18"}
+  ],
+  "paging": {"cursors": {"before": "MAZDZD", "after": "MQZDZD"}, "next": "https://graph.facebook.com/v26.0/act_120400001/insights?after=MQZDZD&access_token=SECRET"}
+}

@@ -1,0 +1,27 @@
+{
+  "results": [
+    {
+      "campaign": {"resourceName": "customers/1234567890/campaigns/222", "id": "222", "name": "Search | Solaranlage Gewerbe"},
+      "adGroup": {"resourceName": "customers/1234567890/adGroups/333", "id": "333", "name": "Photovoltaik Gewerbe"},
+      "adGroupAd": {
+        "resourceName": "customers/1234567890/adGroupAds/333~444",
+        "status": "ENABLED",
+        "ad": {"resourceName": "customers/1234567890/ads/444", "id": "444", "type": "RESPONSIVE_SEARCH_AD", "finalUrls": ["https://www.alpenblick-solar.de/gewerbe?utm_source=google"]},
+        "policySummary": {
+          "approvalStatus": "DISAPPROVED",
+          "reviewStatus": "REVIEWED",
+          "policyTopicEntries": [{"topic": "MISLEADING_CLAIMS", "type": "PROHIBITED"}]
+        }
+      }
+    },
+    {
+      "campaign": {"resourceName": "customers/1234567890/campaigns/111", "id": "111", "name": "Search | Brand"},
+      "adGroup": {"resourceName": "customers/1234567890/adGroups/555", "id": "555", "name": "Brand"},
+      "adGroupAd": {
+        "status": "ENABLED",
+        "ad": {"id": "666", "type": "RESPONSIVE_SEARCH_AD", "finalUrls": ["https://www.alpenblick-solar.de/"]},
+        "policySummary": {"approvalStatus": "APPROVED", "reviewStatus": "REVIEWED"}
+      }
+    }
+  ]
+}

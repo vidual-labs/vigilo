@@ -1,0 +1,21 @@
+{
+  "contract_version": 1,
+  "client": "alpenblick-solar",
+  "data": [
+    {
+      "id": "ld_01J9Z6Q4K8", "submitted_at": "2026-10-19T08:15:00Z", "updated_at": "2026-10-19T09:00:00Z",
+      "status": "new", "status_changed_at": null, "source_type": "meta_lead_ads",
+      "attribution": {"meta_campaign_id": "2385011", "meta_adset_id": "23850119", "meta_ad_id": "2385011002", "meta_form_id": "9001", "has_gclid": false},
+      "flags": {"duplicate": false, "qualified": false, "contacted": false, "organic": false}
+    },
+    {
+      "id": "ld_01J9Z7B2M1", "submitted_at": "2026-10-19T10:40:12+02:00", "updated_at": "2026-10-19T11:00:00Z",
+      "status": "offer_sent", "status_changed_at": "2026-10-19T11:00:00Z", "source_type": "openflow",
+      "attribution": {"has_gclid": true, "utm_source": "google", "utm_medium": "cpc", "utm_campaign": "solar-gewerbe"},
+      "flags": {"duplicate": false, "qualified": true, "contacted": true, "organic": false},
+      "full_name": "Should Never Be Stored", "email": "never@example.com", "phone": "+49 30 000000", "message": "free text must be dropped"
+    }
+  ],
+  "next_cursor": "eyJ1IjoiMjAyNi0xMC0xOVQxMTowMDowMFoiLCJpIjoibGRfMDFKOVo3QjJNMSJ9",
+  "has_more": true
+}

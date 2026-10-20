@@ -1,0 +1,9 @@
+{
+    "_comment": "Conversions fell to ~30% of normal over the last three days while spend stayed the same.",
+    "now": "2026-10-20 07:30",
+    "connections": [{"id": 2, "platform": "meta", "name": "Lichtblick – Meta"}],
+    "series": [
+        {"connection": 2, "from": 40, "to": 4, "spend": 120, "conversions": 5},
+        {"connection": 2, "from": 3, "to": 1, "spend": 120, "conversions": 1.5}
+    ]
+}

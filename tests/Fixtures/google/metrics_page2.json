@@ -1,0 +1,6 @@
+{
+  "results": [
+    {"campaign": {"resourceName": "customers/1234567890/campaigns/111", "id": "111", "name": "Search | Brand"}, "metrics": {"costMicros": "38000000", "impressions": "790", "clicks": "51", "conversions": 0}, "segments": {"date": "2026-10-19"}}
+  ],
+  "fieldMask": "segments.date,campaign.id,campaign.name,metrics.costMicros,metrics.impressions,metrics.clicks,metrics.conversions"
+}

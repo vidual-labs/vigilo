@@ -1,0 +1,9 @@
+{
+    "_comment": "Google account spending ~€190/day; tracking died two days ago (0 conversions yesterday and the day before).",
+    "now": "2026-10-20 07:30",
+    "connections": [{"id": 1, "platform": "google", "name": "Alpenblick – Google Ads"}],
+    "series": [
+        {"connection": 1, "from": 40, "to": 3, "spend": 190, "conversions": 4},
+        {"connection": 1, "from": 2, "to": 1, "spend": 185, "conversions": 0}
+    ]
+}

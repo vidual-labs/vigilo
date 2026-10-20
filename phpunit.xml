@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory="storage/framework/testing/phpunit-cache"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <!--
+        Every value is set as <server> AND <env>, both forced. Inside the Docker
+        containers the real environment (DB_CONNECTION=pgsql, …) arrives in
+        $_SERVER, which Laravel reads before $_ENV — an <env> entry alone would
+        lose and the tests would run against the live database.
+        tests/TestCase.php refuses to migrate anything but in-memory SQLite.
+    -->
+    <php>
+        <server name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <server name="APP_KEY" value="base64:dGVzdGluZy1rZXktZm9yLXZpZ2lsby10ZXN0cy0xMjM=" force="true"/>
+        <env name="APP_KEY" value="base64:dGVzdGluZy1rZXktZm9yLXZpZ2lsby10ZXN0cy0xMjM=" force="true"/>
+        <server name="APP_URL" value="http://localhost" force="true"/>
+        <env name="APP_URL" value="http://localhost" force="true"/>
+        <server name="APP_LOCALE" value="en" force="true"/>
+        <env name="APP_LOCALE" value="en" force="true"/>
+        <server name="APP_CONFIG_CACHE" value="storage/framework/testing/config.php" force="true"/>
+        <env name="APP_CONFIG_CACHE" value="storage/framework/testing/config.php" force="true"/>
+        <server name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <server name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <server name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <server name="CACHE_STORE" value="array" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <server name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <server name="DB_DATABASE" value=":memory:" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <server name="DB_URL" value="" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
+        <server name="MAIL_MAILER" value="array" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <server name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <server name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <server name="LOG_CHANNEL" value="null" force="true"/>
+        <env name="LOG_CHANNEL" value="null" force="true"/>
+        <server name="VIGILO_MOCK_MODE" value="true" force="true"/>
+        <env name="VIGILO_MOCK_MODE" value="true" force="true"/>
+        <server name="VIGILO_DEMO_DATA" value="false" force="true"/>
+        <env name="VIGILO_DEMO_DATA" value="false" force="true"/>
+        <server name="VIGILO_LODGELY_ENABLED" value="false" force="true"/>
+        <env name="VIGILO_LODGELY_ENABLED" value="false" force="true"/>
+        <server name="VIGILO_TIMEZONE" value="Europe/Berlin" force="true"/>
+        <env name="VIGILO_TIMEZONE" value="Europe/Berlin" force="true"/>
+        <server name="VIGILO_HTTP_RETRIES" value="2" force="true"/>
+        <env name="VIGILO_HTTP_RETRIES" value="2" force="true"/>
+        <server name="ADMIN_EMAIL" value="admin@example.com" force="true"/>
+        <env name="ADMIN_EMAIL" value="admin@example.com" force="true"/>
+        <server name="ADMIN_PASSWORD" value="" force="true"/>
+        <env name="ADMIN_PASSWORD" value="" force="true"/>
+        <server name="SESSION_SECURE_COOKIE" value="false" force="true"/>
+        <env name="SESSION_SECURE_COOKIE" value="false" force="true"/>
+        <server name="VIGILO_NOTIFY_CRITICAL_IMMEDIATELY" value="true" force="true"/>
+        <env name="VIGILO_NOTIFY_CRITICAL_IMMEDIATELY" value="true" force="true"/>
+        <server name="VIGILO_DIGEST_WHEN_EMPTY" value="true" force="true"/>
+        <env name="VIGILO_DIGEST_WHEN_EMPTY" value="true" force="true"/>
+        <server name="VIGILO_FETCH_METRICS_DAYS" value="40" force="true"/>
+        <env name="VIGILO_FETCH_METRICS_DAYS" value="40" force="true"/>
+        <server name="VIGILO_GOOGLE_ADS_API_VERSION" value="v26" force="true"/>
+        <env name="VIGILO_GOOGLE_ADS_API_VERSION" value="v26" force="true"/>
+        <server name="VIGILO_GOOGLE_ADS_BASE_URL" value="https://googleads.googleapis.com" force="true"/>
+        <env name="VIGILO_GOOGLE_ADS_BASE_URL" value="https://googleads.googleapis.com" force="true"/>
+        <server name="VIGILO_META_ADS_API_VERSION" value="v26.0" force="true"/>
+        <env name="VIGILO_META_ADS_API_VERSION" value="v26.0" force="true"/>
+        <server name="VIGILO_META_ADS_BASE_URL" value="https://graph.facebook.com" force="true"/>
+        <env name="VIGILO_META_ADS_BASE_URL" value="https://graph.facebook.com" force="true"/>
+        <server name="VIGILO_META_CONVERSION_ACTION_TYPES" value="lead,onsite_conversion.lead_grouped,offsite_conversion.fb_pixel_lead" force="true"/>
+        <env name="VIGILO_META_CONVERSION_ACTION_TYPES" value="lead,onsite_conversion.lead_grouped,offsite_conversion.fb_pixel_lead" force="true"/>
+        <server name="VIGILO_GOOGLE_ADS_DEVELOPER_TOKEN" value="" force="true"/>
+        <env name="VIGILO_GOOGLE_ADS_DEVELOPER_TOKEN" value="" force="true"/>
+        <server name="VIGILO_GOOGLE_ADS_REFRESH_TOKEN" value="" force="true"/>
+        <env name="VIGILO_GOOGLE_ADS_REFRESH_TOKEN" value="" force="true"/>
+        <server name="VIGILO_META_ADS_ACCESS_TOKEN" value="" force="true"/>
+        <env name="VIGILO_META_ADS_ACCESS_TOKEN" value="" force="true"/>
+        <server name="VIGILO_META_APP_SECRET" value="" force="true"/>
+        <env name="VIGILO_META_APP_SECRET" value="" force="true"/>
+        <server name="VIGILO_LODGELY_URL" value="" force="true"/>
+        <env name="VIGILO_LODGELY_URL" value="" force="true"/>
+        <server name="VIGILO_LODGELY_API_TOKEN" value="" force="true"/>
+        <env name="VIGILO_LODGELY_API_TOKEN" value="" force="true"/>
+        <server name="TRUSTED_PROXIES" value="127.0.0.1" force="true"/>
+        <env name="TRUSTED_PROXIES" value="127.0.0.1" force="true"/>
+    </php>
+</phpunit>
