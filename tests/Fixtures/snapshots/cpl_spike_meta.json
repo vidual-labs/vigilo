@@ -1,0 +1,9 @@
+{
+    "_comment": "Meta CPL doubled in the last 7 days (spend flat, conversions halved). Lead source too thin to use.",
+    "now": "2026-10-20 07:30",
+    "connections": [{"id": 3, "platform": "meta"}],
+    "series": [
+        {"connection": 3, "from": 40, "to": 8, "spend": 150, "conversions": 5},
+        {"connection": 3, "from": 7, "to": 1, "spend": 150, "conversions": 2}
+    ]
+}

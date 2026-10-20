@@ -1,0 +1,7 @@
+{
+    "_comment": "20 October: Google spent €130/day for 19 days (€2,470) against a €3,000 monthly budget: pro rata €1,839, heading for €4,030.",
+    "now": "2026-10-20 07:30",
+    "connections": [{"id": 4, "platform": "google"}],
+    "series": [{"connection": 4, "from": 19, "to": 1, "spend": 130, "conversions": 4}],
+    "budgets": {"google": 3000}
+}
