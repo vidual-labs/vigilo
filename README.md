@@ -310,17 +310,27 @@ vigilo uses the Marketing API with a **system-user token** and the
 
 ## lodgely integration
 
-**Status: contract defined, waiting for lodgely.** lodgely currently has no
-read API (only webhook intake). The API vigilo expects — a read-only,
-PII-free lead-metadata feed with cursor paging and deletions — is specified
-in [docs/LODGELY-CONTRACT.md](docs/LODGELY-CONTRACT.md). vigilo's client for
-it is implemented and covered by contract tests against fixtures, behind
+**Status: available from lodgely 0.59.0, off by default until the
+end-to-end test.** vigilo reads a read-only, PII-free lead-metadata feed
+with cursor paging and deletions, specified in
+[docs/LODGELY-CONTRACT.md](docs/LODGELY-CONTRACT.md). vigilo's client is
+covered by contract tests against fixtures and sits behind
 `VIGILO_LODGELY_ENABLED=false`.
 
-Until lodgely ships it, the lead source of each client can be set to
-*lodgely* with the client key, and in mock mode it is simulated. The
-*spend without leads* check and lead-based CPL need a lead source; all other
-checks work without one.
+To connect a lodgely 0.59.0+ install:
+
+1. In lodgely, *Settings → API tokens* → create a token with *Lead metadata*
+   access and copy it (shown once).
+2. Set `VIGILO_LODGELY_ENABLED=true`, `VIGILO_LODGELY_URL` and
+   `VIGILO_LODGELY_API_TOKEN`, then restart.
+3. Set each client's lead source to *lodgely* with its client key: the slug
+   of the lodgely client name (`Kanzlei Brenner & Partner` →
+   `kanzlei-brenner-partner`). *Test* calls the feed with `limit=1`.
+
+In mock mode the feed is simulated. The *spend without leads* check and
+lead-based CPL need a lead source; all other checks work without one.
+lodgely sends `has_gclid: false` until it stores click ids per lead, so
+Google CPL uses platform conversions until then.
 
 ## Webhooks
 
@@ -462,7 +472,7 @@ miner** (lead quality per Meta ad / ad set and Google keyword from lodgely
 outcomes, junk-lead spikes, negative-keyword and expansion suggestions) —
 and later phases are in [ROADMAP.md](ROADMAP.md). Changes are listed in
 [CHANGELOG.md](CHANGELOG.md). Open tasks and unanswered questions — including
-the lodgely read API vigilo is waiting for — are tracked in
+the end-to-end test with lodgely — are tracked in
 [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md).
 
 ## License

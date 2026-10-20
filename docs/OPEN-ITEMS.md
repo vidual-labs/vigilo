@@ -2,14 +2,15 @@
 
 **State:** vigilo 0.1.0 (Phase 1, the watchdog) is merged into `main`
 (PR #1, 2026-10-20). CI is green, and `cp .env.example .env && docker
-compose up -d` works on a fresh clone. This file lists everything that is
-still open: tasks, unanswered questions and known gaps.
+compose up -d` works on a fresh clone. lodgely 0.59.0 ships the
+lead-metadata API vigilo reads (**LG-15**, contract v1). This file lists
+everything that is still open: tasks, unanswered questions and known gaps.
 
-**Next session:** lodgely and vigilo together. Start with
-[§1 Cross-repo tasks](#1-cross-repo-tasks-vigilo--lodgely) and answer the
-questions marked **cross-repo** in [§2](#2-open-questions) first. They
-decide the lodgely API vigilo depends on. The contract itself is
-[LODGELY-CONTRACT.md](LODGELY-CONTRACT.md).
+**Next session:** run both stacks together (T-L4), then decide whether the
+lodgely integration is switched on by default (T-L6). The contract is
+[LODGELY-CONTRACT.md](LODGELY-CONTRACT.md); the shared roadmap section is
+*Shared with vigilo* at the end of [ROADMAP.md](../ROADMAP.md), mirrored in
+lodgely's ROADMAP.
 
 Keep this file current. Close an item by deleting it and noting the outcome
 in CHANGELOG / ROADMAP, or move a decided question into the table below.
@@ -24,7 +25,9 @@ Do not reopen these without the owner (Richard).
 |---|---|
 | **Ad-platform credentials come from `.env` in each tool.** vigilo's `VIGILO_GOOGLE_ADS_*` / `VIGILO_META_ADS_ACCESS_TOKEN` mirror lodgely's `LODGELY_*` names so the values can be copied. lodgely does **not** hand out tokens over an API. | README → configuration; LODGELY-CONTRACT → "Not proposed" |
 | **Leads carry `has_gclid` only.** No click id (gclid/gbraid/wbraid/fbclid) is ever sent to or stored by vigilo. | `LeadMetadata`, contract, privacy notes |
-| **Client key in contract v1 = slug of lodgely's `client_name`.** (May be revisited with lodgely LG-4; see Q-2.) | Contract → "Client identity" |
+| **Client key in contract v1 = slug of lodgely's `client_name`** until lodgely LG-4 ships a Client model (Q-2 a, confirmed 2026-10-20). A rename in lodgely breaks the key; *connection health* shows it. | Contract → "Client identity"; T-L3 |
+| **The vigilo ↔ lodgely interface has its own section, mirrored in both ROADMAPs** (Q-1 b, confirmed 2026-10-20). The OpenFlow ↔ lodgely section stays untouched. | ROADMAP → *Shared with vigilo* (both repos) |
+| **`has_gclid` is `false` until lodgely LG-6** stores click ids per lead (Q-3 b, confirmed 2026-10-20). Google CPL falls back to platform conversions until then. | Contract → lead object; lodgely `LeadMetadataFeed` |
 | **One full run per day** (default 06:00 Europe/Berlin). No intraday run in v1 (that is VG-14). | `VIGILO_DAILY_RUN_AT` |
 | **Default UI language English**; German complete; per-user language. German uses the formal "Sie". | `APP_LOCALE`, `lang/de.json` |
 | **First admin password:** generated when `ADMIN_PASSWORD` is empty, printed once, must be changed at first login. A weak or default password stops the start. | `vigilo:admin:ensure` |
@@ -35,33 +38,19 @@ Do not reopen these without the owner (Richard).
 
 ## 1. Cross-repo tasks (vigilo ↔ lodgely)
 
-### T-L1 · Build the lead-metadata read API in lodgely (lodgely LG-15)
-**Repo:** lodgely · **Effort:** M · **Blocks:** everything lead-based in vigilo (spend without leads with real data, lead-based CPL, all of Phase 2)
-
-Implement contract v1 as specified in [LODGELY-CONTRACT.md](LODGELY-CONTRACT.md):
-- `GET /api/v1/lead-metadata`: change feed ordered by `(updated_at, id)`, opaque cursor, `has_more`, tombstones.
-- Read-only token scope `lead-metadata:read`; tokens stored hashed and shown once.
-- Rate limit 60/min.
-- A lodgely contract test that fails if PII keys appear in the payload.
-
-The drafted acceptance criteria are at the end of the contract doc.
-
-Two dependencies inside lodgely:
-- `submitted_at` exists only after **LG-3**; until then use `created_at`.
-- `has_gclid` needs attribution stored per lead, which comes with **LG-6** (currently partial: OpenFlow click ids sit in `raw_payload`). Decide whether v1 derives it from `raw_payload` or waits for LG-6 (Q-3).
-
-### T-L2 · Put the item into lodgely's ROADMAP
-**Repo:** lodgely · **Effort:** S
-- Add **LG-15** (text drafted at the end of LODGELY-CONTRACT.md).
-- lodgely's ROADMAP has a *Shared: cross-repo interfaces* section that is duplicated verbatim with OpenFlow and covers only OpenFlow ↔ lodgely. Decide whether the vigilo interface gets a shared item there (e.g. **X-3**) or a separate "vigilo" section (Q-1).
-- Add vigilo as a consumer to **X-2** (cross-system erasure): erasures in lodgely must reach vigilo as feed tombstones (vigilo already deletes on tombstones).
+Done on 2026-10-20 (lodgely 0.59.0): **T-L1** (LG-15, the read API with
+hashed, scoped tokens, rate limit, request log and a PII contract test),
+**T-L2** (LG-15 and the *Shared with vigilo* section in lodgely's ROADMAP;
+erasures reach vigilo as tombstones, noted under LG-11 / LG-12 rather than
+in the OpenFlow-shared X-2) and **T-L5** (lodgely README → *Pairing with
+vigilo*, including the env mapping).
 
 ### T-L3 · Align client identity with lodgely LG-4
-**Repo:** both · **Effort:** S · **Depends on:** Q-2
+**Repo:** both · **Effort:** S · **Depends on:** lodgely LG-4
 lodgely plans a real Client model (LG-4, decision D4). When it lands, the contract's `client` parameter should take that model's stable key. vigilo needs no code change, only the key entered per client. Optionally add `GET /api/v1/clients` (contract → "Optional, later") so vigilo can offer a dropdown instead of a text field. That needs a small vigilo UI change in `ClientEdit`.
 
 ### T-L4 · End-to-end test with both stacks
-**Repo:** both · **Effort:** S · **Depends on:** T-L1
+**Repo:** both · **Effort:** S · **Depends on:** lodgely 0.59.0
 1. Run lodgely and vigilo side by side in Docker.
 2. Create a read-only token in lodgely and set `VIGILO_LODGELY_ENABLED=true`, `VIGILO_LODGELY_URL`, `VIGILO_LODGELY_API_TOKEN`.
 3. Map a client key and run `vigilo:run --sync`.
@@ -70,35 +59,20 @@ Then:
 - Record real, anonymised responses into `tests/Fixtures/lodgely/` and keep both contract test suites green.
 - Check that a lead deleted in lodgely disappears from vigilo.
 - Check that no PII column fills up.
-
-### T-L5 · Document the pairing in lodgely's README
-**Repo:** lodgely · **Effort:** S
-- A short "vigilo" section: what the token is for, that the feed is PII-free, and how to create the token.
-- The env-variable mapping `LODGELY_GOOGLE_ADS_*` → `VIGILO_GOOGLE_ADS_*`, `LODGELY_META_ADS_ACCESS_TOKEN` → `VIGILO_META_ADS_ACCESS_TOKEN`.
+- Check a lead whose client is renamed in lodgely: the old key 404s and
+  *connection health* raises a finding (Q-2 a). A lead moved to another
+  client is not tombstoned in the old client's feed; decide if that matters.
 
 ### T-L6 · Switch the lodgely integration on by default
-**Repo:** vigilo · **Effort:** S · **Depends on:** a lodgely release with T-L1
-Keep `VIGILO_LODGELY_ENABLED=false` until a lodgely release ships the API. Then decide whether the default flips, and update README → *lodgely integration* and CHANGELOG.
+**Repo:** vigilo · **Effort:** S · **Depends on:** T-L4
+Keep `VIGILO_LODGELY_ENABLED=false` until the end-to-end test passes against
+lodgely 0.59.0 or later. Then decide whether the default flips, and update README → *lodgely integration* and CHANGELOG.
 
 ---
 
 ## 2. Open questions
 
-Each question has my recommendation; the owner decides.
-
-### Q-1 · Where does the vigilo ↔ lodgely interface live in lodgely's roadmap? *(cross-repo)*
-lodgely's shared section is an OpenFlow ↔ lodgely document duplicated in both repos.
-**Options:** (a) a new shared item X-3 in that section (then it is duplicated into OpenFlow too, which does not care); (b) a separate "Shared with vigilo" section in lodgely's ROADMAP mirrored in vigilo's ROADMAP; (c) only LG-15 plus a link to vigilo's contract doc.
-**Recommendation:** (b). It keeps the OpenFlow document untouched and gives vigilo ↔ lodgely its own mirrored section.
-
-### Q-2 · Client key: slug of `client_name` now, or wait for lodgely LG-4? *(cross-repo)*
-A slug changes when someone renames the client in lodgely, and the feed then 404s until the key is updated in vigilo.
-**Options:** (a) slug now and the LG-4 key later, with vigilo showing *Connection health* when the key breaks (already the case); (b) build LG-4 first and ship the API with stable client ids.
-**Recommendation:** (a) unless LG-4 is close; the failure mode is visible and cheap to fix.
-
-### Q-3 · Where does `has_gclid` come from before LG-6? *(cross-repo)*
-**Options:** (a) lodgely derives it from `raw_payload` (OpenFlow hidden fields) in the API layer; (b) LG-15 ships with `has_gclid: false` until LG-6.
-**Recommendation:** (a) if `raw_payload` reliably carries `gclid` / `gbraid` / `wbraid`; otherwise (b), with lead-based CPL for Google falling back to platform conversions (vigilo already does this automatically).
+Each question has my recommendation; the owner decides. Q-1 – Q-3 were decided on 2026-10-20 (see the table above).
 
 ### Q-4 · Who resolves gclid → keyword for Phase 2 (VG-9)? *(cross-repo)*
 vigilo must not store click ids, but the keyword-quality miner needs keyword attribution.
@@ -177,7 +151,7 @@ All check thresholds are educated guesses (see `config/vigilo.php`). Two to watc
 - Backups are documentation only (VG-17).
 
 ### Roadmap
-Phase 2 (miner, VG-7 – VG-12), Phase 3 (operator comfort, VG-13 – VG-17) and Phase 4 (client portal, VG-18 – VG-19), with acceptance criteria, are in [ROADMAP.md](../ROADMAP.md). VG-7 is blocked on T-L1; VG-9 on Q-4.
+Phase 2 (miner, VG-7 – VG-12), Phase 3 (operator comfort, VG-13 – VG-17) and Phase 4 (client portal, VG-18 – VG-19), with acceptance criteria, are in [ROADMAP.md](../ROADMAP.md). VG-7 waits on T-L4; VG-9 on Q-4.
 
 ---
 
