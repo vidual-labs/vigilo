@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+    # Read the casts() method bodies so cast attributes get their real types.
+    parseModelCastsMethod: true
+    paths:
+        - app
+        - config
+        - database
+        - routes
+    excludePaths:
+        - database/migrations

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory="storage/framework/testing/phpunit-cache"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <!--
+        force="true" everywhere: inside the Docker containers the real
+        environment (DB_CONNECTION=pgsql, …) comes from env_file, and without
+        force those values would win — tests must never touch the live database.
+    -->
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_KEY" value="base64:dGVzdGluZy1rZXktZm9yLXZpZ2lsby10ZXN0cy0xMjM=" force="true"/>
+        <env name="APP_URL" value="http://localhost" force="true"/>
+        <env name="APP_LOCALE" value="en" force="true"/>
+        <env name="APP_CONFIG_CACHE" value="storage/framework/testing/config.php" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="LOG_CHANNEL" value="null" force="true"/>
+        <env name="VIGILO_MOCK_MODE" value="true" force="true"/>
+        <env name="VIGILO_DEMO_DATA" value="false" force="true"/>
+        <env name="VIGILO_LODGELY_ENABLED" value="false" force="true"/>
+        <env name="VIGILO_TIMEZONE" value="Europe/Berlin" force="true"/>
+        <env name="VIGILO_HTTP_RETRIES" value="2" force="true"/>
+        <env name="ADMIN_EMAIL" value="admin@example.com" force="true"/>
+        <env name="ADMIN_PASSWORD" value="" force="true"/>
+    </php>
+</phpunit>
