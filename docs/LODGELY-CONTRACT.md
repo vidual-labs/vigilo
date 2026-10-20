@@ -1,13 +1,15 @@
 # lodgely → vigilo: lead-metadata contract v1
 
-**Status:** proposed. vigilo implements the client side
-(`App\Domain\Leads\Lodgely\LodgelyLeadSource`, behind
-`VIGILO_LODGELY_ENABLED`) and tests it against the fixtures in
-`tests/Fixtures/lodgely/`. lodgely does not ship this API yet; today it has
-only webhook intake. The lodgely-side work is drafted at the end of this
-document as a ROADMAP item. Open questions that may change this contract
-(client key vs. lodgely LG-4, `has_gclid` before LG-6, keyword attribution
-for Phase 2) are Q-1 – Q-5 in [OPEN-ITEMS.md](OPEN-ITEMS.md).
+**Status:** implemented on both sides. vigilo's client is
+`App\Domain\Leads\Lodgely\LodgelyLeadSource` (behind
+`VIGILO_LODGELY_ENABLED`, tested against `tests/Fixtures/lodgely/`).
+lodgely serves it from 0.59.0 as **LG-15** (`LeadMetadataFeed`,
+`LeadMetadataController`, contract test `LeadMetadataApiTest`). What lodgely
+sends today, where it is narrower than the contract allows, is listed in
+[lodgely 0.59.0 specifics](#lodgely-0590-specifics). Open questions that
+may extend it (keyword attribution for Phase 2) are in
+[OPEN-ITEMS.md](OPEN-ITEMS.md); the shared roadmap section is *Shared with
+vigilo* in both repos' ROADMAP.md.
 
 ## Why vigilo needs it
 
@@ -194,38 +196,34 @@ token-free endpoint could share the *mapping* of clients to ad account ids.
   against `tests/Fixtures/lodgely/page1.json` and `page2.json` (paging,
   status updates, a tombstone, PII in the payload that must be dropped,
   version mismatch, auth failure).
-- lodgely should add a contract test that asserts the endpoint's JSON
-  matches these fixtures' shape and **contains none of** `full_name`,
-  `email`, `phone`, `message`, `custom_answers`, `raw_payload`, `gclid`.
-- When the endpoint ships, record real (anonymised) responses into
-  vigilo's fixtures and keep both test suites green.
+- lodgely: `tests/Feature/LeadMetadataApiTest.php` asserts the contract
+  shape, paging, tombstones, auth, rate limiting, and that the response
+  **contains none of** `full_name`, `email`, `phone`, `message`,
+  `custom_answers`, `raw_payload`, `gclid` (and more), neither as keys nor
+  as values.
+- Next (OPEN-ITEMS T-L4): record real (anonymised) responses from lodgely
+  into vigilo's fixtures and keep both test suites green.
 
 ---
 
-## Draft lodgely ROADMAP item
+## lodgely 0.59.0 specifics
 
-> To be added to lodgely's `ROADMAP.md` (shared section), in the format of
-> the existing items.
+What lodgely's first implementation sends, within the contract above:
 
-### LG-15 · Lead-metadata read API for vigilo
-**Repo:** lodgely · **Status:** missing (intake only: webhooks, imports; no read API) · **Effort:** M · **Depends on:** LG-3 (submission time; `created_at` is used until then)
-**Why:** vigilo (ads watchdog) must see when real leads stop arriving and,
-later, which ads produce good leads. It needs lead *metadata* per client —
-never lead content.
+| Field | lodgely 0.59.0 |
+|---|---|
+| `id` | `ld_<lead id>`. |
+| `client` key | `Str::slug(client_name)`. Names that differ only in case or punctuation (`Acme`, `acme`) share a key and are served together. Soft-deleted leads count, so a client whose leads were all purged still resolves. |
+| `submitted_at` | `created_at` (ingest time) until LG-3. |
+| `status_changed_at` | The latest `lead.status_changed` audit event; `null` if the status never changed. |
+| `source_type` | `csv`, `email` (both email importers), `manual`, `webhook`, `google_sheets`, `meta_lead_ads` (lodgely's `meta_leads` and the demo `meta_ads`), `openflow`. Other keys pass through if they match `[a-z0-9_]{1,40}`. |
+| `attribution.meta_*` | From lodgely's `campaign_id` / `adset_id` / `ad_id` / `form_id` columns (Meta Lead Ads). |
+| `attribution.has_gclid` | Always `false` until LG-6 (decision Q-3 b). |
+| `attribution.utm_*` | Always `null` until LG-6. |
+| `flags` | `duplicate`, `qualified`, `contacted`, `organic`. `spam` is not sent: lodgely has no spam marker. |
+| Tombstones | Every soft-deleted lead (manual delete, retention purge, Sheets dedupe) goes out once. A future hard delete (LG-11) must keep emitting one. |
+| Errors | `401` / `403` / `404` with `{"message": …}`; `422` for invalid `client` / `limit` / `updated_since`; `400` `Invalid cursor.`; `429` with `Retry-After`. |
+| Limits | 60 requests per minute per token; unknown tokens share a 10/min bucket per IP. Each request is logged with token id, client key and row count. |
 
-**Acceptance criteria**
-- Operators can create and revoke read-only API tokens with the scope
-  `lead-metadata:read`; tokens are stored hashed and shown once.
-- `GET /api/v1/lead-metadata?client=&cursor=&updated_since=&limit=` returns
-  contract v1 (vigilo `docs/LODGELY-CONTRACT.md`): change feed ordered by
-  `(updated_at, id)`, opaque `next_cursor`, `has_more`, tombstones for
-  deleted leads (soft-deleted and purged leads both appear once as
-  `deleted: true`).
-- The payload never contains name, email, phone, message, custom answers,
-  raw payload, notes, AI output, IP or click ids; a contract test fails if
-  any of those keys appear.
-- `has_gclid` is derived from the stored attribution (LG-6) without
-  exposing the id.
-- `client` accepts the slug of `client_name`; unknown keys return 404.
-- Rate limited per token (60/min, `Retry-After` on 429); every request is
-  logged with token id, client and row count (no lead data).
+Tokens are created and revoked under *Settings → API tokens* in lodgely
+(scope `lead-metadata:read`), stored as SHA-256 hashes and shown once.

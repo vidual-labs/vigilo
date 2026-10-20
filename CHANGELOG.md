@@ -7,6 +7,16 @@ user-facing change gets an entry under **Unreleased**.
 
 ## [Unreleased]
 
+### Changed
+
+- **lodgely ships the lead-metadata API** (lodgely 0.59.0, LG-15).
+  `docs/LODGELY-CONTRACT.md` is marked implemented and lists what lodgely
+  sends today (`ld_` ids, slug client keys, `has_gclid` always `false` until
+  lodgely LG-6, no `spam` flag). The ROADMAP gains a *Shared with vigilo*
+  section mirrored in lodgely's ROADMAP, and OPEN-ITEMS records the decisions
+  on Q-1 – Q-3. `VIGILO_LODGELY_ENABLED` stays `false` until the end-to-end
+  test (T-L4).
+
 ## [0.1.0] - 2026-10-20
 
 First release: the watchdog (Phase 1).

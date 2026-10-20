@@ -20,11 +20,13 @@ Effort: **S** ≈ days, **M** ≈ 1–2 weeks, **L** ≈ several weeks.
 | 3 | Operator comfort | VG-13 – VG-17 | planned |
 | 4 | Client portal | VG-18, VG-19 | later |
 
-Cross-repo dependency: **X-V1** (lodgely lead-metadata API, drafted as
-lodgely `LG-15` in [docs/LODGELY-CONTRACT.md](docs/LODGELY-CONTRACT.md))
-unlocks real lead data for *spend without leads*, lead-based CPL and all of
-Phase 2. The cross-repo tasks (T-L1 – T-L6) and the open questions that
-shape them are in [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md).
+Cross-repo dependency: **X-V1** (the lodgely lead-metadata API, contract in
+[docs/LODGELY-CONTRACT.md](docs/LODGELY-CONTRACT.md)) unlocks real lead data
+for *spend without leads*, lead-based CPL and all of Phase 2. lodgely ships
+it as **LG-15** in 0.59.0. The interface has its own mirrored section at the
+end of this file,
+[Shared with vigilo](#shared-with-vigilo-lead-metadata-interface); the
+remaining cross-repo tasks are in [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md).
 
 ---
 
@@ -53,7 +55,7 @@ shape them are in [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md).
 - Tests prove the adapters only read (no mutate, GET only).
 
 ### VG-3 · Lead source contract
-**Status:** done on the vigilo side; lodgely API pending (X-V1) · **Effort:** M
+**Status:** done (lodgely side shipped as LG-15 in lodgely 0.59.0) · **Effort:** M
 **Acceptance criteria**
 - `docs/LODGELY-CONTRACT.md` defines a read-only, PII-free change feed per
   client with cursor paging and tombstones.
@@ -95,7 +97,7 @@ people make the change in the ad platform. Seams already in place:
 open); `AdPlatforms\Contracts\ProvidesSearchTerms` is declared.
 
 ### VG-7 · Live lodgely lead feed
-**Status:** blocked on X-V1 · **Effort:** S · **Depends on:** lodgely LG-15
+**Status:** unblocked (lodgely 0.59.0 ships LG-15); needs the end-to-end test (T-L4) · **Effort:** S · **Depends on:** lodgely LG-15
 **Why:** everything in this phase needs real outcomes.
 **Acceptance criteria**
 - Turning on `VIGILO_LODGELY_ENABLED` against a lodgely that ships contract
@@ -202,3 +204,80 @@ produce *qualified* leads.
 **Acceptance criteria**
 - Optional weekly digest per client login, in plain language, without
   internal notes.
+
+---
+
+## Shared with vigilo: lead-metadata interface
+
+> This section is **duplicated verbatim** in `vidual-labs/lodgely/ROADMAP.md`
+> and `vidual-labs/vigilo/ROADMAP.md`. Change it in both, in the same
+> release pair. It is separate from the OpenFlow ↔ lodgely section on
+> purpose: OpenFlow is not part of this interface.
+
+### Who owns what
+
+| Concern | Owner | Never in |
+|---|---|---|
+| Lead intake, lead content (PII), evaluation, outreach state, attribution (LG-6), reporting charts, client reports, quality conversions sent to ad platforms (LG-7) | **lodgely** | vigilo |
+| Daily ad-account checks, findings ("broken", later "wasting money"), digests and alerts, suggestions without charts | **vigilo** | lodgely |
+| Ad-platform credentials | each tool keeps its own copy (lodgely: *Settings → Ad platforms* or `LODGELY_*`; vigilo: `VIGILO_*`) | the API |
+
+vigilo reads lead **metadata** from lodgely and nothing else. It never
+receives or stores a name, contact detail, message, answer, raw payload,
+note, AI output or click id.
+
+### Decisions (confirmed 2026-10-20)
+
+| # | Decision | Consequence |
+|---|---|---|
+| V1 | **Own section, mirrored in both roadmaps** (vigilo OPEN-ITEMS Q-1 b). | The OpenFlow ↔ lodgely section stays untouched. |
+| V2 | **Client key = slug of lodgely's `client_name`** until LG-4 ships (Q-2 a). | Renaming a client breaks the key; vigilo raises a *connection health* finding until the key is updated there. |
+| V3 | **`has_gclid` is `false` until LG-6** stores click ids per lead (Q-3 b). | vigilo's Google CPL falls back to platform conversions until then. |
+| V4 | **No click ids, ever.** The feed carries `has_gclid` only (decided with vigilo 0.1.0). | Keyword-level lead quality needs Q-4 (below). |
+
+### X-V1 · Lead-metadata contract v1
+**Repo:** both (spec in vigilo `docs/LODGELY-CONTRACT.md`) · **Status:** done
+`GET /api/v1/lead-metadata?client=&cursor=&updated_since=&limit=`: a change
+feed per client ordered by `(updated_at, id)`, opaque cursor, `has_more`,
+`deleted: true` tombstones, bearer token with scope `lead-metadata:read`.
+New optional fields may be added at any time; removing or changing one is a
+new contract version.
+
+### LG-15 · Lead-metadata read API for vigilo
+**Repo:** lodgely · **Status:** done in lodgely 0.59.0 · **Effort:** M · **Depends on:** X-V1
+- Operators create and revoke read-only tokens under *Settings → API
+  tokens*; tokens are stored as SHA-256 hashes and shown once.
+- The feed is built from an explicit column allow-list
+  (`LeadMetadataFeed`); `LeadMetadataApiTest` fails if a PII key or value
+  appears.
+- Soft-deleted leads go out once as tombstones; status changes on old leads
+  reappear after the cursor because every lead write bumps `updated_at`.
+- Rate limited at 60/min per token with `Retry-After`; every request is
+  logged with token id, client key and row count only.
+- `submitted_at` is `created_at` until LG-3; `has_gclid` is `false` and the
+  UTM fields are `null` until LG-6.
+
+### Follow-ups that touch this interface
+
+| Item | Repo | What changes for vigilo |
+|---|---|---|
+| LG-3 submission time | lodgely | `submitted_at` switches from `created_at` to the real submission time. No contract change. |
+| LG-4 Client model | lodgely | `client` accepts the Client's stable slug; optional `GET /api/v1/clients` for a dropdown in vigilo's `ClientEdit` (T-L3). |
+| LG-6 per-lead attribution | lodgely | `has_gclid` and `utm_*` are filled from stored attribution. No contract change. |
+| LG-11 real erasure | lodgely | A hard-deleted lead must still go out once as a tombstone (e.g. an id-only tombstone row), or vigilo keeps it. |
+| LG-12 data-subject erasure | lodgely | Erased leads reach vigilo as tombstones; vigilo already deletes on them. Nothing to call. |
+| VG-7 live lead feed | vigilo | Switch `VIGILO_LODGELY_ENABLED` on by default once a lodgely release with LG-15 is deployed (T-L6); end-to-end test with both stacks (T-L4). |
+
+### Open questions
+
+- **Q-4 · gclid → keyword for vigilo's keyword-quality miner (VG-9).**
+  Recommended: lodgely resolves it via Google Ads `click_view` (read-only,
+  90-day window) as part of LG-6/LG-7 and adds `google_keyword` /
+  `google_ad_group_id` to the feed. Not decided.
+- **Q-5 · Boundary between vigilo's miner and lodgely's reporting.**
+  Proposed: lodgely *reports* (charts, client reports) and *sends* quality
+  conversions; vigilo *alerts* (findings) and *suggests* (e.g. negative
+  keywords), without charts. Not confirmed.
+- **Q-6 · Spend from lodgely?** Recommended: no. vigilo keeps fetching its
+  own ad data (it needs review status, final URLs, token expiry and fetch
+  health that lodgely does not keep). Not confirmed.
