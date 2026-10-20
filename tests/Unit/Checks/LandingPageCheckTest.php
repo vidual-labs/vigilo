@@ -1,10 +1,11 @@
 <?php
 
+use App\Domain\Checks\CheckResult;
 use App\Domain\Checks\Checks\LandingPageCheck;
 use App\Domain\Findings\Enums\Severity;
 use Tests\Support\SnapshotBuilder;
 
-function landing(SnapshotBuilder $builder): \App\Domain\Checks\CheckResult
+function landing(SnapshotBuilder $builder): CheckResult
 {
     return (new LandingPageCheck)->run($builder->build(), thresholds('landing_page'));
 }

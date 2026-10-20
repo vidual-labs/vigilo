@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\Checks\CheckResult;
+use App\Domain\Findings\Data\FindingDraft;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,8 +23,8 @@ function thresholds(string $check, array $overrides = []): array
     return array_merge($values, $overrides);
 }
 
-/** @return array<string, \App\Domain\Findings\Data\FindingDraft> dedupe suffix => draft */
-function findingsBySubject(\App\Domain\Checks\CheckResult $result): array
+/** @return array<string, FindingDraft> dedupe suffix => draft */
+function findingsBySubject(CheckResult $result): array
 {
     $out = [];
     foreach ($result->findings as $draft) {
@@ -30,4 +32,10 @@ function findingsBySubject(\App\Domain\Checks\CheckResult $result): array
     }
 
     return $out;
+}
+
+/** ICU separates numbers and units with (narrow) no-break spaces; compare with plain ones. */
+function spaces(string $value): string
+{
+    return str_replace(["\u{00A0}", "\u{202F}"], ' ', $value);
 }

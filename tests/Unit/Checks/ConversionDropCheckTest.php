@@ -1,11 +1,12 @@
 <?php
 
+use App\Domain\Checks\CheckResult;
 use App\Domain\Checks\Checks\ConversionDropCheck;
 use App\Domain\Findings\Enums\Severity;
 use App\Enums\Platform;
 use Tests\Support\SnapshotBuilder;
 
-function conversionDrop(SnapshotBuilder $builder, array $overrides = []): \App\Domain\Checks\CheckResult
+function conversionDrop(SnapshotBuilder $builder, array $overrides = []): CheckResult
 {
     return (new ConversionDropCheck)->run($builder->build(), thresholds('conversion_drop', $overrides));
 }

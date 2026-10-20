@@ -1,10 +1,11 @@
 <?php
 
+use App\Domain\Checks\CheckResult;
 use App\Domain\Checks\Checks\SpendWithoutLeadsCheck;
 use App\Domain\Findings\Enums\Severity;
 use Tests\Support\SnapshotBuilder;
 
-function spendWithoutLeads(SnapshotBuilder $builder, array $overrides = []): \App\Domain\Checks\CheckResult
+function spendWithoutLeads(SnapshotBuilder $builder, array $overrides = []): CheckResult
 {
     return (new SpendWithoutLeadsCheck)->run($builder->build(), thresholds('spend_without_leads', $overrides));
 }

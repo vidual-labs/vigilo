@@ -1,0 +1,8 @@
+{
+  "results": [
+    {"campaign": {"resourceName": "customers/1234567890/campaigns/111", "id": "111", "name": "Search | Brand"}, "metrics": {"costMicros": "41230000", "impressions": "812", "clicks": "57", "conversions": 3.0}, "segments": {"date": "2026-10-18"}},
+    {"campaign": {"resourceName": "customers/1234567890/campaigns/222", "id": "222", "name": "Search | Solaranlage Gewerbe"}, "metrics": {"costMicros": "129990000", "impressions": "2310", "clicks": "88", "conversions": 2.5}, "segments": {"date": "2026-10-18"}}
+  ],
+  "nextPageToken": "page-2",
+  "fieldMask": "segments.date,campaign.id,campaign.name,metrics.costMicros,metrics.impressions,metrics.clicks,metrics.conversions"
+}

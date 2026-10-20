@@ -2,12 +2,6 @@
 
 use App\Support\Format;
 
-/** ICU separates currency and amount with (narrow) no-break spaces. */
-function spaces(string $value): string
-{
-    return str_replace(["\u{00A0}", "\u{202F}"], ' ', $value);
-}
-
 it('formats money, numbers and percentages for the reader', function () {
     expect(spaces(Format::money(1234.5, 'EUR', 'en')))->toBe('€1,234.50')
         ->and(spaces(Format::money(1234.5, 'EUR', 'de')))->toBe('1.234,50 €')

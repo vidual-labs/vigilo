@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "id": "2385011001", "name": "Video – Werkhalle", "effective_status": "DISAPPROVED", "configured_status": "ACTIVE",
+      "campaign": {"id": "2385011", "name": "Leads | Entscheider DACH", "effective_status": "ACTIVE"},
+      "adset": {"id": "23850119", "name": "DACH 35-65", "effective_status": "ACTIVE"},
+      "creative": {"id": "1", "object_story_spec": {"video_data": {"call_to_action": {"type": "LEARN_MORE", "value": {"link": "https://www.nordwerk.de/angebot?utm_source=meta"}}}}},
+      "ad_review_feedback": {"global": {"Personal Attributes": "Ads must not assert or imply personal attributes."}}
+    },
+    {
+      "id": "2385011002", "name": "Lead Form – Katalog", "effective_status": "ACTIVE", "configured_status": "ACTIVE",
+      "campaign": {"id": "2385011", "name": "Leads | Entscheider DACH", "effective_status": "ACTIVE"},
+      "adset": {"id": "23850119", "name": "DACH 35-65", "effective_status": "ACTIVE"},
+      "creative": {"id": "2", "object_story_spec": {"link_data": {"link": "http://fb.me/", "call_to_action": {"type": "SIGN_UP", "value": {"lead_gen_form_id": "9001"}}}}}
+    },
+    {
+      "id": "2385012001", "name": "Retargeting – paused set", "effective_status": "ADSET_PAUSED", "configured_status": "ACTIVE",
+      "campaign": {"id": "2385012", "name": "Retargeting | Website", "effective_status": "ACTIVE"},
+      "adset": {"id": "23850129", "name": "Besucher 30T", "effective_status": "PAUSED"},
+      "creative": {"id": "3", "link_url": "https://www.nordwerk.de/"}
+    }
+  ],
+  "paging": {"cursors": {"before": "a", "after": "b"}}
+}

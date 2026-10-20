@@ -135,7 +135,7 @@ class Inbox extends Component
     {
         $user = auth()->user();
         $counts = Finding::query()->visibleTo($user)->where('status', FindingStatus::Open->value)
-            ->selectRaw('severity, count(*) as n')->groupBy('severity')->pluck('n', 'severity');
+            ->selectRaw('severity, count(*) as n')->groupBy('severity')->toBase()->pluck('n', 'severity');
 
         return view('livewire.findings.inbox', [
             'findings' => $this->query()->orderBySeverity()->orderByDesc('opened_at')->paginate(25),

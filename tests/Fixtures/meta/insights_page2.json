@@ -1,0 +1,6 @@
+{
+  "data": [
+    {"campaign_id": "2385012", "campaign_name": "Retargeting | Website", "spend": "21.10", "impressions": "3011", "clicks": "40", "actions": [{"action_type": "offsite_conversion.fb_pixel_lead", "value": "2"}], "date_start": "2026-10-18", "date_stop": "2026-10-18"}
+  ],
+  "paging": {"cursors": {"before": "MQZDZD", "after": "MgZDZD"}}
+}

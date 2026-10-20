@@ -1,0 +1,10 @@
+{
+  "contract_version": 1,
+  "client": "alpenblick-solar",
+  "data": [
+    {"id": "ld_01J9Z6Q4K8", "submitted_at": "2026-10-19T08:15:00Z", "updated_at": "2026-10-20T07:00:00Z", "status": "successful", "status_changed_at": "2026-10-20T07:00:00Z", "source_type": "meta_lead_ads", "attribution": {"meta_campaign_id": "2385011", "meta_adset_id": "23850119", "meta_ad_id": "2385011002", "meta_form_id": "9001", "has_gclid": false}, "flags": {"duplicate": false, "qualified": true}},
+    {"id": "ld_01J9Z7B2M1", "deleted": true, "updated_at": "2026-10-20T07:05:00Z"}
+  ],
+  "next_cursor": "eyJ1IjoiMjAyNi0xMC0yMFQwNzowNTowMFoiLCJpIjoibGRfMDFKOVo3QjJNMSJ9",
+  "has_more": false
+}

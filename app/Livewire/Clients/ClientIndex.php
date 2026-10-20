@@ -34,6 +34,7 @@ class ClientIndex extends Component
             ->whereIn('status', [FindingStatus::Open->value, FindingStatus::Acknowledged->value])
             ->selectRaw('client_id, severity, count(*) as n')
             ->groupBy('client_id', 'severity')
+            ->toBase()
             ->get()
             ->groupBy('client_id')
             ->map(fn ($rows) => $rows->pluck('n', 'severity'));
