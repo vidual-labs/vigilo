@@ -91,3 +91,13 @@ it('skips inactive clients and can run checks without fetching', function () {
 
     expect($run->status)->toBe(RunStatus::Completed)->and(Finding::query()->count())->toBe(0);
 });
+
+it('resolves the open findings of a client that was deactivated', function () {
+    app(RunManager::class)->start(RunTrigger::Manual);
+    expect(Finding::query()->active()->count())->toBeGreaterThan(0);
+
+    $this->client->update(['is_active' => false]);
+    app(RunManager::class)->start(RunTrigger::Manual);
+
+    expect(Finding::query()->active()->count())->toBe(0);
+});

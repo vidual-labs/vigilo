@@ -80,7 +80,7 @@
         @else
             <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                 @foreach ($findings as $finding)
-                    <li wire:key="finding-{{ $finding->id }}" class="flex gap-3 px-4 py-3 hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                    <li wire:key="finding-{{ $finding->id }}" class="flex flex-wrap gap-3 px-4 py-3 sm:flex-nowrap hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                         @if ($this->canOperate())
                             <input type="checkbox" wire:model.live="selected" value="{{ $finding->id }}" class="mt-1 rounded border-slate-300 dark:border-slate-700" aria-label="{{ __('Select') }}">
                         @endif
@@ -107,7 +107,7 @@
                             </div>
                         </div>
                         @if ($this->canOperate())
-                            <div class="flex shrink-0 items-start gap-1" x-data="{ open: false }">
+                            <div class="ml-7 flex shrink-0 items-start gap-1 sm:ml-0" x-data="{ open: false }">
                                 @if ($finding->status === \App\Domain\Findings\Enums\FindingStatus::Open)
                                     <button type="button" wire:click="acknowledge({{ $finding->id }})" class="v-btn-secondary px-2 py-1 text-xs">{{ __('Acknowledge') }}</button>
                                 @elseif ($finding->status->isActive())

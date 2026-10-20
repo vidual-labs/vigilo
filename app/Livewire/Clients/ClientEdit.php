@@ -86,6 +86,8 @@ class ClientEdit extends Component
     public function save(): void
     {
         $this->authorizeOperator();
+        // Accept German decimal commas ("1500,50").
+        $this->budgets = array_map(fn ($v) => str_replace(',', '.', trim((string) $v)), $this->budgets);
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'timezone' => ['required', 'timezone:all'],

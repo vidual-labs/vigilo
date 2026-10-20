@@ -67,7 +67,7 @@ it('creates a client with budgets, lead source, monitored URL and a check overri
         ->set('name', 'Seeberger Holzbau')
         ->set('currency', 'CHF')
         ->set('timezone', 'Europe/Zurich')
-        ->set('budgets.google', '3000')
+        ->set('budgets.google', '3000,50')
         ->set('leadType', 'lodgely')
         ->set('leadKey', 'seeberger-holzbau')
         ->set('checkForm.cpl_spike.values.warning_factor', '1,8')
@@ -77,7 +77,7 @@ it('creates a client with budgets, lead source, monitored URL and a check overri
 
     $client = Client::query()->where('name', 'Seeberger Holzbau')->firstOrFail();
     expect($client->slug)->toBe('seeberger-holzbau')
-        ->and($client->budgets()->value('monthly_amount'))->toEqual('3000.00')
+        ->and($client->budgets()->value('monthly_amount'))->toEqual('3000.50')
         ->and($client->leadSource->external_key)->toBe('seeberger-holzbau')
         ->and(CheckSetting::query()->where('client_id', $client->id)->where('check_key', 'cpl_spike')->value('thresholds'))->toBe(['warning_factor' => 1.8])
         ->and(CheckSetting::query()->where('client_id', $client->id)->where('check_key', 'landing_page')->value('enabled'))->toBeFalse();

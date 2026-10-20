@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Domain\Demo\DemoSeeder;
+use App\Models\Client;
 use Illuminate\Console\Command;
 
 class DemoSeedCommand extends Command
@@ -21,6 +22,12 @@ class DemoSeedCommand extends Command
             $this->error('Demo data needs VIGILO_MOCK_MODE=true (it uses simulated connections).');
 
             return self::FAILURE;
+        }
+
+        if (Client::query()->where('is_demo', true)->exists()) {
+            $this->info('vigilo: demo clients are already loaded.');
+
+            return self::SUCCESS;
         }
 
         $this->info('vigilo: loading demo clients…');

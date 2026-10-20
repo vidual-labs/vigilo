@@ -80,6 +80,7 @@ it('creates users from the command line', function () {
 
 it('runs a full cycle from the command line', function () {
     $this->artisan('vigilo:demo:seed')->assertSuccessful();
+    $this->artisan('vigilo:demo:seed')->expectsOutputToContain('already loaded')->assertSuccessful();
 
     $this->artisan('vigilo:run --sync --no-fetch')->expectsOutputToContain('finished: completed')->assertSuccessful();
 });

@@ -44,6 +44,16 @@ class RunManager
             new RunClientChecks($c->id, $runId),
         ])))->all();
 
+        // Deactivated clients are not fetched, but a checks pass resolves
+        // whatever was still open for them.
+        if ($client === null) {
+            $inactive = Client::query()->where('is_active', false)
+                ->whereHas('findings', fn ($q) => $q->active())->pluck('id');
+            foreach ($inactive as $id) {
+                $jobs[] = [new RunClientChecks($id, $runId)];
+            }
+        }
+
         if ($jobs === []) {
             $this->finish($runId, 0);
 
