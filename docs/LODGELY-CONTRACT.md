@@ -5,7 +5,9 @@
 `VIGILO_LODGELY_ENABLED`) and tests it against the fixtures in
 `tests/Fixtures/lodgely/`. lodgely does not ship this API yet; today it has
 only webhook intake. The lodgely-side work is drafted at the end of this
-document as a ROADMAP item.
+document as a ROADMAP item. Open questions that may change this contract
+(client key vs. lodgely LG-4, `has_gclid` before LG-6, keyword attribution
+for Phase 2) are Q-1 – Q-5 in [OPEN-ITEMS.md](OPEN-ITEMS.md).
 
 ## Why vigilo needs it
 

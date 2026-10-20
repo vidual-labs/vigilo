@@ -23,7 +23,8 @@ Effort: **S** ≈ days, **M** ≈ 1–2 weeks, **L** ≈ several weeks.
 Cross-repo dependency: **X-V1** (lodgely lead-metadata API, drafted as
 lodgely `LG-15` in [docs/LODGELY-CONTRACT.md](docs/LODGELY-CONTRACT.md))
 unlocks real lead data for *spend without leads*, lead-based CPL and all of
-Phase 2.
+Phase 2. The cross-repo tasks (T-L1 – T-L6) and the open questions that
+shape them are in [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md).
 
 ---
 
@@ -117,7 +118,7 @@ produce *qualified* leads.
   automatic change.
 
 ### VG-9 · Lead quality per Google keyword
-**Status:** planned · **Effort:** L · **Depends on:** VG-7, a decision on click ids
+**Status:** planned · **Effort:** L · **Depends on:** VG-7, a decision on click ids (OPEN-ITEMS Q-4)
 **Why:** the same question for Search: which keywords bring junk.
 **Acceptance criteria**
 - Decide how to attribute a lead to a keyword without storing click ids in

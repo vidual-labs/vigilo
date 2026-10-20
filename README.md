@@ -461,7 +461,9 @@ Phase 1 (the watchdog) is this release. Phase 2 — the **lead-quality
 miner** (lead quality per Meta ad / ad set and Google keyword from lodgely
 outcomes, junk-lead spikes, negative-keyword and expansion suggestions) —
 and later phases are in [ROADMAP.md](ROADMAP.md). Changes are listed in
-[CHANGELOG.md](CHANGELOG.md).
+[CHANGELOG.md](CHANGELOG.md). Open tasks and unanswered questions — including
+the lodgely read API vigilo is waiting for — are tracked in
+[docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md).
 
 ## License
 

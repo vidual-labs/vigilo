@@ -4,6 +4,10 @@ A concise orientation (the README is the full reference). It exists to keep
 contributors — human or AI — on the architectural rails, and to record the
 gotchas that already cost time once.
 
+**Starting a new session? Read [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md)
+first.** It lists the decisions already made, the open tasks (including
+the cross-repo work with lodgely) and the unanswered questions.
+
 ## Product north star
 
 vigilo watches every client's ad accounts once a day and tells the agency
@@ -125,7 +129,8 @@ via `LandingPageProbeService`) → `RunClientChecks` (`CheckRunner` builds a
 3. **Landing-page checks never submit forms** — GET requests only.
 4. **Every user-facing change gets a CHANGELOG entry under "Unreleased".**
 5. **Keep README.md and CLAUDE.md in sync with the code** (features, env
-   vars, commands, architecture).
+   vars, commands, architecture), and **docs/OPEN-ITEMS.md in sync with
+   reality**: remove what is done, add what is newly open.
 6. **EN + DE strings for all UI text** (`TranslationsTest` enforces it).
 7. **Tests for every check** (unit tests on fixture data) and for every
    adapter (HTTP fakes + fixtures).
