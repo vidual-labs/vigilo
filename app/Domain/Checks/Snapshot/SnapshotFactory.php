@@ -87,10 +87,11 @@ class SnapshotFactory
         $leads = $leadSource === null ? [] : Lead::query()
             ->where('client_id', $client->id)
             ->where('submitted_at', '>=', $from->utc())
-            ->get(['submitted_at', 'status', 'source_type', 'meta_campaign_id', 'meta_adset_id', 'meta_ad_id', 'has_gclid'])
+            ->get(['submitted_at', 'status', 'source_type', 'meta_campaign_id', 'meta_adset_id', 'meta_ad_id', 'has_gclid',
+                'google_campaign_id', 'flags'])
             ->map(fn (Lead $lead) => new LeadFact(
                 submittedAt: CarbonImmutable::instance($lead->submitted_at),
-                countable: $lead->status->isCountable(),
+                countable: $lead->isCountable(),
                 platform: $lead->attributedPlatform(),
             ))->all();
 

@@ -181,5 +181,9 @@ npm run build                   # assets
   Webhooks always fire.
 - **Queue `retry_after` (1000 s) must stay above the longest job timeout**
   (`SyncClientData`, 900 s), or a slow fetch runs twice.
+- **Count leads with `Lead::isCountable()`** (or `LeadFact::$countable`),
+  never by status alone: lodgely's duplicate flag also excludes a lead.
+  lodgely's reporting uses the same rule (`Lead::scopeCountable()` there;
+  ROADMAP → *Shared with vigilo*, V6), so numbers agree across both tools.
 - **The demo flag survives removal** (`AppSetting demo.seeded_at`), so
   `vigilo:demo:remove` is not undone by the next container start.

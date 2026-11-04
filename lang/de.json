@@ -250,7 +250,6 @@
     "The client key from lodgely (see docs/LODGELY-CONTRACT.md).": "Der Kundenschlüssel aus lodgely (siehe docs/LODGELY-CONTRACT.md).",
     "The current password is not correct.": "Das aktuelle Passwort ist nicht korrekt.",
     "The daily run fetches every client, runs all checks and sends the digest. Scheduled at :time.": "Der tägliche Lauf ruft alle Kunden ab, führt alle Prüfungen aus und versendet die Zusammenfassung. Geplant um :time.",
-    "The lodgely integration is switched off (VIGILO_LODGELY_ENABLED=false).": "Die lodgely-Anbindung ist ausgeschaltet (VIGILO_LODGELY_ENABLED=false).",
     "The same problem stays one finding; it is not re-alerted every day.": "Dasselbe Problem bleibt ein Befund; es wird nicht jeden Tag neu gemeldet.",
     "Theme": "Darstellung",
     "These credentials do not match our records.": "Diese Zugangsdaten stimmen nicht.",
@@ -302,5 +301,9 @@
     "vigilo digest: all clear": "vigilo-Zusammenfassung: alles in Ordnung",
     "vigilo is read-only: it never changes campaigns, budgets or keywords. Fix the cause in the ad platform; the finding resolves itself on the next run.": "vigilo ist nur lesend: Es ändert nie Kampagnen, Budgets oder Keywords. Die Ursache in der Werbeplattform beheben; der Befund behebt sich beim nächsten Lauf von selbst.",
     "vigilo just detected the following. It will also be in tomorrow's digest.": "vigilo hat gerade Folgendes erkannt. Es steht auch in der Zusammenfassung von morgen.",
-    "… and :count more.": "… und :count weitere."
+    "… and :count more.": "… und :count weitere.",
+    "The lodgely integration is not set up: set VIGILO_LODGELY_URL and VIGILO_LODGELY_API_TOKEN.": "Die lodgely-Anbindung ist nicht eingerichtet: Setzen Sie VIGILO_LODGELY_URL und VIGILO_LODGELY_API_TOKEN.",
+    "Conversion action types (optional)": "Conversion-Aktionstypen (optional)",
+    "Comma-separated, first match wins, e.g. offsite_conversion.custom.123456789. Leave empty to use VIGILO_META_CONVERSION_ACTION_TYPES.": "Kommagetrennt, der erste Treffer zählt, z. B. offsite_conversion.custom.123456789. Leer lassen, um VIGILO_META_CONVERSION_ACTION_TYPES zu verwenden.",
+    "conversion action types": "Conversion-Aktionstypen"
 }

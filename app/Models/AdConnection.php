@@ -101,6 +101,34 @@ class AdConnection extends Model
         return (string) $this->setting('mock_scenario', 'healthy');
     }
 
+    /**
+     * Meta action types counted as conversions, in order of preference. A
+     * connection may override the install default
+     * (VIGILO_META_CONVERSION_ACTION_TYPES), e.g. for an account optimising
+     * for a custom conversion (offsite_conversion.custom.<id>).
+     *
+     * @return list<string>
+     */
+    public function metaConversionActionTypes(): array
+    {
+        $own = array_values(array_filter((array) $this->setting('meta_conversion_action_types', [])));
+
+        return $own !== [] ? $own : array_values((array) config('vigilo.meta.conversion_action_types', ['lead']));
+    }
+
+    /**
+     * Parse a comma-separated list of Meta action types. Only Meta's own
+     * token characters survive (letters, digits, dot, underscore).
+     *
+     * @return list<string>
+     */
+    public static function parseActionTypes(string $raw): array
+    {
+        $types = array_map('trim', explode(',', $raw));
+
+        return array_values(array_unique(array_filter($types, fn (string $t) => preg_match('/^[a-z0-9_.]{1,100}$/i', $t) === 1)));
+    }
+
     public function displayName(): string
     {
         return $this->name ?: ($this->setting('account_name') ?: $this->platform->label().' '.$this->displayAccountId());

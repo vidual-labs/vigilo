@@ -40,7 +40,8 @@ it('stays quiet for a healthy account', function () {
 });
 
 it('ignores windows without meaningful spend', function () {
-    $builder = SnapshotBuilder::at()->connection(1)->series(1, 40, 4, 150, 4)->series(1, 3, 1, 5, 0);
+    // Spend stopped four days ago: every window (Google skips yesterday) is quiet.
+    $builder = SnapshotBuilder::at()->connection(1)->series(1, 40, 5, 150, 4)->series(1, 4, 1, 5, 0);
 
     expect(conversionDrop($builder)->findings)->toBeEmpty();
 });
@@ -79,4 +80,28 @@ it('skips paused connections', function () {
     $builder = SnapshotBuilder::fromFixture('conversion_tracking_broken')->connection(1, Platform::Google, ['is_active' => false]);
 
     expect(conversionDrop($builder)->findings)->toBeEmpty();
+});
+
+it('skips yesterday for Google by default, because conversions arrive late', function () {
+    // Yesterday looks dead, but Google is still attributing its conversions.
+    $builder = SnapshotBuilder::at()->connection(1)->series(1, 40, 2, 150, 4)->series(1, 1, 1, 150, 0);
+
+    expect(conversionDrop($builder)->findings)->toBeEmpty()
+        ->and(conversionDrop($builder, ['google_skip_recent_days' => 0])->findings)->toHaveCount(1);
+});
+
+it('still catches a Google outage once the skipped day is behind it', function () {
+    $builder = SnapshotBuilder::at()->connection(1)->series(1, 40, 3, 150, 4)->series(1, 2, 1, 150, 0);
+
+    $result = conversionDrop($builder);
+
+    expect($result->findings)->toHaveCount(1)
+        ->and($result->findings[0]->severity)->toBe(Severity::Critical)
+        ->and($result->findings[0]->evidence['window'])->toBe('2026-10-18 – 2026-10-18');
+});
+
+it('does not skip days for Meta', function () {
+    $builder = SnapshotBuilder::at()->connection(1, Platform::Meta)->series(1, 40, 2, 150, 4)->series(1, 1, 1, 150, 0);
+
+    expect(conversionDrop($builder)->findings)->toHaveCount(1);
 });

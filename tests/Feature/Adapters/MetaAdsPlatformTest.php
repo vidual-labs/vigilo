@@ -52,6 +52,26 @@ it('pages through insights with cursors and counts lead actions', function () {
     Http::assertSent(fn (Request $r) => ($r['after'] ?? null) === 'MQZDZD' && $r['level'] === 'campaign' && $r['time_increment'] === 1);
 });
 
+it('counts the conversion action types a connection overrides', function () {
+    // This account optimises for its pixel lead; the install default would count "lead" first.
+    $this->connection->update(['settings' => ['meta_conversion_action_types' => ['link_click']]]);
+    Http::fake(['graph.facebook.com/v26.0/act_120400001/insights*' => Http::sequence()
+        ->push(fixture('meta/insights_page1.json'))
+        ->push(fixture('meta/insights_page2.json'))]);
+
+    $days = $this->meta->dailyMetrics($this->connection->fresh(), CarbonImmutable::parse('2026-10-18'), CarbonImmutable::parse('2026-10-18'));
+
+    expect($days[0]->conversions)->toBe(121.0)
+        ->and($days[1]->conversions)->toBe(0.0);
+});
+
+it('parses an operator-entered list of action types', function () {
+    expect(AdConnection::parseActionTypes(' offsite_conversion.custom.123, lead ,, lead, bad type!'))
+        ->toBe(['offsite_conversion.custom.123', 'lead'])
+        ->and(AdConnection::factory()->meta()->make()->metaConversionActionTypes())
+        ->toBe(config('vigilo.meta.conversion_action_types'));
+});
+
 it('maps ads, review feedback and landing pages', function () {
     Http::fake(['graph.facebook.com/v26.0/act_120400001/ads*' => Http::response(fixture('meta/ads.json'))]);
 

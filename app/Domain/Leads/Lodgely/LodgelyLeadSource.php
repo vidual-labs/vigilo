@@ -13,15 +13,21 @@ use Illuminate\Http\Client\Response;
 
 /**
  * Client for lodgely's lead-metadata read API, contract v1
- * (docs/LODGELY-CONTRACT.md). lodgely does not ship this API yet, so the
- * adapter sits behind VIGILO_LODGELY_ENABLED and is covered by contract tests
- * against fixtures in tests/Fixtures/lodgely.
+ * (docs/LODGELY-CONTRACT.md), served by lodgely 0.59.0 and later. Active once
+ * VIGILO_LODGELY_URL and VIGILO_LODGELY_API_TOKEN are set; covered by
+ * contract tests against fixtures in tests/Fixtures/lodgely.
  */
 class LodgelyLeadSource implements LeadSource
 {
     public const CONTRACT_VERSION = 1;
 
     public function __construct(private readonly ResilientHttp $http) {}
+
+    /** The integration is on once both the URL and a token are set. */
+    public static function configured(): bool
+    {
+        return trim((string) config('vigilo.lodgely.url')) !== '' && trim((string) config('vigilo.lodgely.token')) !== '';
+    }
 
     public function fetch(LeadSourceModel $source, ?string $cursor): LeadPage
     {
@@ -90,9 +96,6 @@ class LodgelyLeadSource implements LeadSource
      */
     private function get(string $path, array $query): array
     {
-        if (! config('vigilo.lodgely.enabled')) {
-            throw AdPlatformException::config('The lodgely integration is disabled (VIGILO_LODGELY_ENABLED=false).');
-        }
         $base = (string) config('vigilo.lodgely.url');
         $token = (string) config('vigilo.lodgely.token');
         if ($base === '' || $token === '') {

@@ -29,6 +29,9 @@ final readonly class LeadMetadata
         public ?string $metaFormId = null,
         public bool $hasGclid = false,
         public array $flags = [],
+        public ?string $googleCampaignId = null,
+        public ?string $googleAdGroupId = null,
+        public ?string $googleCriterionId = null,
     ) {}
 
     /**
@@ -58,6 +61,9 @@ final readonly class LeadMetadata
             metaFormId: self::id($attribution['meta_form_id'] ?? null),
             hasGclid: (bool) ($attribution['has_gclid'] ?? false),
             flags: $flags,
+            googleCampaignId: self::numericId($attribution['google_campaign_id'] ?? null),
+            googleAdGroupId: self::numericId($attribution['google_ad_group_id'] ?? null),
+            googleCriterionId: self::numericId($attribution['google_criterion_id'] ?? null),
         );
     }
 
@@ -75,6 +81,9 @@ final readonly class LeadMetadata
             'meta_ad_id' => $this->metaAdId,
             'meta_form_id' => $this->metaFormId,
             'has_gclid' => $this->hasGclid,
+            'google_campaign_id' => $this->googleCampaignId,
+            'google_ad_group_id' => $this->googleAdGroupId,
+            'google_criterion_id' => $this->googleCriterionId,
             'flags' => $this->flags,
         ];
     }
@@ -88,6 +97,17 @@ final readonly class LeadMetadata
         $value = (string) $value;
 
         return preg_match('/^[A-Za-z0-9_\-:.]{1,128}$/', $value) ? $value : null;
+    }
+
+    /** Google ids are numbers; anything else (keyword text, a click id) is dropped. */
+    private static function numericId(mixed $value): ?string
+    {
+        if (! is_scalar($value)) {
+            return null;
+        }
+        $value = (string) $value;
+
+        return preg_match('/^\d{1,20}$/', $value) ? $value : null;
     }
 
     private static function token(mixed $value): ?string

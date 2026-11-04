@@ -17,7 +17,7 @@ class Lead extends Model
     protected $fillable = [
         'client_id', 'lead_source_id', 'external_id', 'submitted_at', 'status', 'status_changed_at',
         'source_type', 'meta_campaign_id', 'meta_adset_id', 'meta_ad_id', 'meta_form_id',
-        'has_gclid', 'flags',
+        'has_gclid', 'google_campaign_id', 'google_ad_group_id', 'google_criterion_id', 'flags',
     ];
 
     protected function casts(): array
@@ -44,6 +44,17 @@ class Lead extends Model
             return Platform::Meta;
         }
 
-        return $this->has_gclid ? Platform::Google : null;
+        return $this->has_gclid || $this->google_campaign_id ? Platform::Google : null;
+    }
+
+    /**
+     * Whether the lead counts towards lead totals and cost per lead: not a
+     * duplicate (by status or by lodgely's duplicate flag) and not incomplete.
+     * lodgely's reporting counts the same way (ROADMAP → Shared with vigilo,
+     * decision V6).
+     */
+    public function isCountable(): bool
+    {
+        return $this->status->isCountable() && empty($this->flags['duplicate']);
     }
 }

@@ -64,7 +64,7 @@ class MetaAdsPlatform implements AdPlatform
             'limit' => 500,
         ]);
 
-        $actionTypes = (array) config('vigilo.meta.conversion_action_types', ['lead']);
+        $actionTypes = $connection->metaConversionActionTypes();
 
         return array_map(fn (array $row) => new CampaignDay(
             date: (string) ($row['date_start'] ?? ''),
