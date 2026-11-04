@@ -29,7 +29,7 @@ class LeadSourceRegistry
         if (config('vigilo.mock_mode')) {
             $types[] = LeadSourceType::Mock;
         }
-        if (config('vigilo.lodgely.enabled') || config('vigilo.mock_mode')) {
+        if (LodgelyLeadSource::configured() || config('vigilo.mock_mode')) {
             $types[] = LeadSourceType::Lodgely;
         }
 

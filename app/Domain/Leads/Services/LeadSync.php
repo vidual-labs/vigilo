@@ -110,7 +110,8 @@ class LeadSync
                 $chunk,
                 ['lead_source_id', 'external_id'],
                 ['submitted_at', 'status', 'status_changed_at', 'source_type', 'meta_campaign_id', 'meta_adset_id',
-                    'meta_ad_id', 'meta_form_id', 'has_gclid', 'flags', 'updated_at'],
+                    'meta_ad_id', 'meta_form_id', 'has_gclid', 'google_campaign_id', 'google_ad_group_id',
+                    'google_criterion_id', 'flags', 'updated_at'],
             );
         }
     }

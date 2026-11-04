@@ -3,7 +3,7 @@
 return [
     'conversion_drop' => [
         'name' => 'Conversion-Einbruch',
-        'description' => 'Die Conversions der letzten 1 oder 3 vollen Tage liegen bei null oder weit unter dem Durchschnitt davor, während das Konto weiter Geld ausgibt.',
+        'description' => 'Die Conversions der letzten 1 oder 3 vollen Tage liegen bei null oder weit unter dem Durchschnitt davor, während das Konto weiter Geld ausgibt. Bei Google wird der jüngste Tag standardmäßig ausgelassen, weil Conversions verspätet eintreffen.',
         'advice' => 'Zuerst das Conversion-Tracking prüfen: Feuert Tag bzw. Pixel noch, sind die Google-Ads-Conversion-Aktionen und Meta-Pixel/CAPI-Events aktiv, wurde die Website oder das Consent-Banner geändert, und lässt sich das Formular noch absenden?',
         'fields' => [
             'windows_days' => 'Zeitfenster (Tage)',
@@ -12,6 +12,7 @@ return [
             'min_window_spend' => 'Mindestausgaben im Fenster',
             'min_baseline_conversions' => 'Min. Conversions im Vergleich',
             'min_expected_conversions' => 'Min. erwartete Conversions',
+            'google_skip_recent_days' => 'Google: jüngste Tage auslassen (Conversion-Verzögerung)',
         ],
     ],
     'spend_without_leads' => [

@@ -49,6 +49,7 @@ class ConnectionIndex extends Component
             'token' => '',
             'clear_token' => false,
             'mock_scenario' => 'healthy',
+            'meta_conversion_action_types' => '',
             'is_active' => true,
         ];
     }
@@ -68,6 +69,7 @@ class ConnectionIndex extends Component
             'token' => '',
             'clear_token' => false,
             'mock_scenario' => $connection->mockScenario(),
+            'meta_conversion_action_types' => implode(', ', (array) $connection->setting('meta_conversion_action_types', [])),
             'is_active' => $connection->is_active,
         ];
     }
@@ -89,7 +91,8 @@ class ConnectionIndex extends Component
             'form.login_customer_id' => ['nullable', 'string', 'max:32', 'regex:/^[\d\- ]+$/'],
             'form.token' => ['nullable', 'string', 'max:4096'],
             'form.mock_scenario' => ['nullable', Rule::in(MockScenarios::AD_SCENARIOS)],
-        ], attributes: ['form.account_id' => __('account id')]);
+            'form.meta_conversion_action_types' => ['nullable', 'string', 'max:500', 'regex:/^[A-Za-z0-9_.,\s]*$/'],
+        ], attributes: ['form.account_id' => __('account id'), 'form.meta_conversion_action_types' => __('conversion action types')]);
 
         $platform = Platform::from($this->form['platform']);
         $accountId = AdConnection::normalizeAccountId($platform, (string) $this->form['account_id']);
@@ -111,7 +114,13 @@ class ConnectionIndex extends Component
             'account_id' => $accountId,
             'login_customer_id' => $platform === Platform::Google ? (preg_replace('/\D/', '', (string) $this->form['login_customer_id']) ?: null) : null,
             'is_active' => (bool) $this->form['is_active'],
-            'settings' => array_merge($connection->settings ?? [], ['mock_scenario' => $this->form['mock_scenario'] ?: 'healthy']),
+            'settings' => array_merge($connection->settings ?? [], [
+                'mock_scenario' => $this->form['mock_scenario'] ?: 'healthy',
+                // Empty = use the install default (VIGILO_META_CONVERSION_ACTION_TYPES).
+                'meta_conversion_action_types' => $platform === Platform::Meta
+                    ? AdConnection::parseActionTypes((string) ($this->form['meta_conversion_action_types'] ?? ''))
+                    : [],
+            ]),
         ]);
 
         // Token override: Google → refresh token, Meta → access token. Blank keeps the old one.

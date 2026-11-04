@@ -87,10 +87,10 @@ return [
         ))))),
     ],
 
-    // lodgely lead source (see docs/LODGELY-CONTRACT.md). Off until lodgely
-    // ships the read API described in the contract.
+    // lodgely lead source (see docs/LODGELY-CONTRACT.md; lodgely 0.59.0+).
+    // On as soon as both the URL and a read-only token are set; there is no
+    // separate switch.
     'lodgely' => [
-        'enabled' => (bool) env('VIGILO_LODGELY_ENABLED', false),
         'url' => rtrim((string) env('VIGILO_LODGELY_URL', ''), '/'),
         'token' => env('VIGILO_LODGELY_API_TOKEN', ''),
         'page_size' => 500,
@@ -154,6 +154,9 @@ return [
             'min_window_spend' => 50,
             'min_baseline_conversions' => 5,
             'min_expected_conversions' => 2,
+            // Google keeps attributing conversions to the click date for days;
+            // end Google's windows this many days before yesterday.
+            'google_skip_recent_days' => 1,
         ],
         'spend_without_leads' => [
             'enabled' => true,

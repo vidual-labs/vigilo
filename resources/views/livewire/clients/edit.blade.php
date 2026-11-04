@@ -87,8 +87,8 @@
                     {{ __('Fetch leads from this source') }}
                 </label>
             @endif
-            @if ($leadType === 'lodgely' && ! config('vigilo.lodgely.enabled') && ! config('vigilo.mock_mode'))
-                <p class="mt-3 text-sm text-amber-700 dark:text-amber-300">{{ __('The lodgely integration is switched off (VIGILO_LODGELY_ENABLED=false).') }}</p>
+            @if ($leadType === 'lodgely' && ! \App\Domain\Leads\Lodgely\LodgelyLeadSource::configured() && ! config('vigilo.mock_mode'))
+                <p class="mt-3 text-sm text-amber-700 dark:text-amber-300">{{ __('The lodgely integration is not set up: set VIGILO_LODGELY_URL and VIGILO_LODGELY_API_TOKEN.') }}</p>
             @endif
             @if ($client?->leadSource)
                 @php($source = $client->leadSource)

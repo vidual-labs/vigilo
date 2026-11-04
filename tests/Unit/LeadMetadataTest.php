@@ -2,6 +2,7 @@
 
 use App\Domain\Leads\Data\LeadMetadata;
 use App\Domain\Leads\Enums\LeadStatus;
+use App\Models\Lead;
 
 it('keeps only allow-listed metadata, whatever the source sends', function () {
     $lead = LeadMetadata::fromContract([
@@ -39,6 +40,31 @@ it('rejects ids that are not opaque tokens', function () {
     ]);
 
     expect($lead->metaCampaignId)->toBeNull()->and($lead->status)->toBe(LeadStatus::Unknown);
+});
+
+it('keeps Google attribution as numeric ids only', function () {
+    $lead = LeadMetadata::fromContract([
+        'id' => 'x2', 'submitted_at' => '2026-10-19T08:15:00Z',
+        'attribution' => [
+            'google_campaign_id' => '20734150311',
+            'google_ad_group_id' => 158826551324,
+            'google_criterion_id' => 'kwd-312040563871',
+        ],
+    ]);
+
+    expect($lead->googleCampaignId)->toBe('20734150311')
+        ->and($lead->googleAdGroupId)->toBe('158826551324')
+        ->and($lead->googleCriterionId)->toBeNull();
+});
+
+it('does not count duplicates by status or by flag', function () {
+    $lead = fn (string $status, array $flags = []) => new Lead(['status' => $status, 'flags' => $flags]);
+
+    expect($lead('new')->isCountable())->toBeTrue()
+        ->and($lead('successful', ['duplicate' => false])->isCountable())->toBeTrue()
+        ->and($lead('duplicate')->isCountable())->toBeFalse()
+        ->and($lead('incomplete')->isCountable())->toBeFalse()
+        ->and($lead('reviewed', ['duplicate' => true])->isCountable())->toBeFalse();
 });
 
 it('maps statuses to countability and outcome buckets', function () {

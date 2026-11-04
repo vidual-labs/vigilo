@@ -7,15 +7,40 @@ user-facing change gets an entry under **Unreleased**.
 
 ## [Unreleased]
 
+### Added
+
+- **Meta conversion action types per connection.** A Meta connection can
+  override `VIGILO_META_CONVERSION_ACTION_TYPES` (*Connections* → edit →
+  *Conversion action types*), for accounts that optimise for a custom
+  conversion such as `offsite_conversion.custom.<id>`.
+- **Google keyword attribution fields.** Leads accept and store the optional
+  contract fields `google_campaign_id`, `google_ad_group_id` and
+  `google_criterion_id` (numeric ValueTrack ids only; anything else is
+  dropped). lodgely sends them once it stores them per lead (LG-6); they are
+  the basis for keyword-level lead quality (VG-9). Needs `php artisan
+  migrate` (runs on container start).
+
 ### Changed
 
+- **Conversion drop skips the most recent day for Google** by default
+  (`google_skip_recent_days`, default 1, per install and per client), because
+  Google keeps attributing conversions to the click date for days and an
+  incomplete "yesterday" raised false alarms. Meta is unchanged.
+- **The lodgely integration is on once `VIGILO_LODGELY_URL` and
+  `VIGILO_LODGELY_API_TOKEN` are set.** `VIGILO_LODGELY_ENABLED` is gone; an
+  existing `VIGILO_LODGELY_ENABLED=false` with a URL and token set no longer
+  keeps the integration off.
+- **Leads flagged as duplicates by lodgely no longer count** towards lead
+  totals and cost per lead, even when their status was changed. vigilo and
+  lodgely's reporting now count leads the same way.
+- OPEN-ITEMS and the *Shared with vigilo* ROADMAP section record the
+  decisions on Q-4 – Q-6 and Q-9 – Q-13.
 - **lodgely ships the lead-metadata API** (lodgely 0.59.0, LG-15).
   `docs/LODGELY-CONTRACT.md` is marked implemented and lists what lodgely
   sends today (`ld_` ids, slug client keys, `has_gclid` always `false` until
   lodgely LG-6, no `spam` flag). The ROADMAP gains a *Shared with vigilo*
   section mirrored in lodgely's ROADMAP, and OPEN-ITEMS records the decisions
-  on Q-1 – Q-3. `VIGILO_LODGELY_ENABLED` stays `false` until the end-to-end
-  test (T-L4).
+  on Q-1 – Q-3.
 
 ## [0.1.0] - 2026-10-20
 

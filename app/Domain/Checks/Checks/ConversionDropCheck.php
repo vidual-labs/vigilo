@@ -5,6 +5,7 @@ namespace App\Domain\Checks\Checks;
 use App\Domain\Checks\CheckResult;
 use App\Domain\Checks\Snapshot\ClientSnapshot;
 use App\Domain\Findings\Enums\Severity;
+use App\Enums\Platform;
 use App\Support\Format;
 
 /**
@@ -15,6 +16,11 @@ use App\Support\Format;
  * Guards against noise: the window needs real spend, the baseline enough
  * conversions, and the expected number of conversions in the window must be
  * high enough that "zero" is actually surprising.
+ *
+ * Google attributes conversions to the click date and keeps adding them for
+ * days, so at the morning run "yesterday" is usually incomplete. For Google
+ * the windows and the baseline therefore end `google_skip_recent_days`
+ * earlier (default 1): a 1-day window is the day before yesterday.
  */
 class ConversionDropCheck extends BaseCheck
 {
@@ -32,6 +38,7 @@ class ConversionDropCheck extends BaseCheck
             'min_window_spend' => 'float',
             'min_baseline_conversions' => 'float',
             'min_expected_conversions' => 'float',
+            'google_skip_recent_days' => 'int',
         ];
     }
 
@@ -39,6 +46,7 @@ class ConversionDropCheck extends BaseCheck
     {
         $result = new CheckResult;
         $baselineDays = max(1, (int) $thresholds['baseline_days']);
+        $googleSkip = max(0, (int) ($thresholds['google_skip_recent_days'] ?? 0));
 
         foreach ($snapshot->activeConnections() as $connection) {
             $subject = 'conn:'.$connection->id;
@@ -48,15 +56,16 @@ class ConversionDropCheck extends BaseCheck
                 continue;
             }
 
+            $skip = $connection->platform === Platform::Google ? $googleSkip : 0;
             $worst = null;
             foreach ((array) $thresholds['windows_days'] as $window) {
                 $window = max(1, (int) $window);
-                $from = $snapshot->daysAgo($window);
-                $to = $snapshot->daysAgo(1);
+                $from = $snapshot->daysAgo($window + $skip);
+                $to = $snapshot->daysAgo(1 + $skip);
                 $spend = $snapshot->sum($connection->id, $from, $to, 'spend');
                 $conversions = $snapshot->sum($connection->id, $from, $to, 'conversions');
-                $baseFrom = $snapshot->daysAgo($window + $baselineDays);
-                $baseTo = $snapshot->daysAgo($window + 1);
+                $baseFrom = $snapshot->daysAgo($window + $skip + $baselineDays);
+                $baseTo = $snapshot->daysAgo($window + $skip + 1);
                 $baseline = $snapshot->sum($connection->id, $baseFrom, $baseTo, 'conversions');
                 $expected = $baseline / $baselineDays * $window;
 

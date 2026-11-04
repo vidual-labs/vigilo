@@ -63,7 +63,7 @@ client does. One install serves the whole agency.
 
 | Check | What it catches | Default |
 |---|---|---|
-| **Conversion drop** | Conversions over the last 1 or 3 complete days are zero, or below 50 % of the trailing 14-day baseline, while the account keeps spending. Google + Meta. | critical at zero, warning below 50 %; needs ≥ €50 spend in the window and ≥ 5 baseline conversions |
+| **Conversion drop** | Conversions over the last 1 or 3 complete days are zero, or below 50 % of the trailing 14-day baseline, while the account keeps spending. Google + Meta. For Google the most recent day is skipped (conversions arrive late; `google_skip_recent_days`, default 1). | critical at zero, warning below 50 %; needs ≥ €50 spend in the window and ≥ 5 baseline conversions |
 | **Spend without leads** | Ads keep spending but the lead source has received no new lead for N hours — a broken form, webhook or sync. | 48 h, ≥ €30 spend, critical |
 | **Connection health** | Failed authentication, no successful fetch for too long, Meta token expiring within 14 days, disabled/unsettled ad account. Covers the lead source too. | warning after 26 h, critical after 72 h; token warning 14 d, critical 3 d |
 | **Budget pacing** | Month-to-date spend vs. the pro-rata monthly budget per platform. | warning outside ±15 %, critical when already over budget or projected > 125 %; from day 3 |
@@ -225,15 +225,14 @@ These are the same values as lodgely's `LODGELY_GOOGLE_ADS_*` — copy them over
 | `VIGILO_META_ADS_ACCESS_TOKEN` | Agency-wide system-user token with `ads_read` (a connection can override it). Same value as lodgely's `LODGELY_META_ADS_ACCESS_TOKEN`. |
 | `VIGILO_META_APP_SECRET` | Optional app secret; every call then carries an `appsecret_proof`. |
 | `VIGILO_META_ADS_API_VERSION` | Pinned Graph/Marketing API version, default `v26.0`. |
-| `VIGILO_META_CONVERSION_ACTION_TYPES` | Which action counts as a conversion; the first type present wins. Default `lead,onsite_conversion.lead_grouped,offsite_conversion.fb_pixel_lead`. |
+| `VIGILO_META_CONVERSION_ACTION_TYPES` | Which action counts as a conversion; the first type present wins. Default `lead,onsite_conversion.lead_grouped,offsite_conversion.fb_pixel_lead`. A Meta connection can override it (*Connections* → edit → *Conversion action types*), e.g. for an account optimising for `offsite_conversion.custom.<id>`. |
 
 ### lodgely
 
 | Variable | Meaning |
 |---|---|
-| `VIGILO_LODGELY_ENABLED` | Feature flag, default `false` (see [lodgely integration](#lodgely-integration)). |
-| `VIGILO_LODGELY_URL` | Base URL of your lodgely install. |
-| `VIGILO_LODGELY_API_TOKEN` | Read-only lodgely API token (lead metadata scope). |
+| `VIGILO_LODGELY_URL` | Base URL of your lodgely install. The integration is on once this and the token are set (see [lodgely integration](#lodgely-integration)). |
+| `VIGILO_LODGELY_API_TOKEN` | Read-only lodgely API token (scope `lead-metadata:read`). |
 
 ## Connecting Google Ads
 
@@ -310,19 +309,17 @@ vigilo uses the Marketing API with a **system-user token** and the
 
 ## lodgely integration
 
-**Status: available from lodgely 0.59.0, off by default until the
-end-to-end test.** vigilo reads a read-only, PII-free lead-metadata feed
-with cursor paging and deletions, specified in
+**Status: available from lodgely 0.59.0.** vigilo reads a read-only,
+PII-free lead-metadata feed with cursor paging and deletions, specified in
 [docs/LODGELY-CONTRACT.md](docs/LODGELY-CONTRACT.md). vigilo's client is
-covered by contract tests against fixtures and sits behind
-`VIGILO_LODGELY_ENABLED=false`.
+covered by contract tests against fixtures. There is no on/off switch: the
+integration is on as soon as the URL and the token are set.
 
 To connect a lodgely 0.59.0+ install:
 
 1. In lodgely, *Settings → API tokens* → create a token with *Lead metadata*
    access and copy it (shown once).
-2. Set `VIGILO_LODGELY_ENABLED=true`, `VIGILO_LODGELY_URL` and
-   `VIGILO_LODGELY_API_TOKEN`, then restart.
+2. Set `VIGILO_LODGELY_URL` and `VIGILO_LODGELY_API_TOKEN`, then restart.
 3. Set each client's lead source to *lodgely* with its client key: the slug
    of the lodgely client name (`Kanzlei Brenner & Partner` →
    `kanzlei-brenner-partner`). *Test* calls the feed with `limit=1`.
@@ -331,6 +328,10 @@ In mock mode the feed is simulated. The *spend without leads* check and
 lead-based CPL need a lead source; all other checks work without one.
 lodgely sends `has_gclid: false` until it stores click ids per lead, so
 Google CPL uses platform conversions until then.
+
+vigilo counts a lead only if it is not a duplicate (by status or lodgely's
+duplicate flag) and not incomplete, the same rule lodgely's reporting uses,
+so lead numbers and cost per lead agree between the two tools.
 
 ## Webhooks
 

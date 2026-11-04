@@ -23,7 +23,6 @@ beforeEach(function () {
     Sleep::fake();
     config([
         'vigilo.mock_mode' => false,
-        'vigilo.lodgely.enabled' => true,
         'vigilo.lodgely.url' => 'https://leads.agency.example',
         'vigilo.lodgely.token' => 'lodgely-read-only-token',
     ]);
@@ -65,7 +64,11 @@ it('never stores personal data, even when lodgely sends it', function () {
         ->and($dump)->not->toContain('never@example.com')
         ->and($dump)->not->toContain('+49 30')
         ->and($dump)->not->toContain('free text');
-    expect(Lead::query()->where('external_id', 'ld_01J9Z7B2M1')->value('has_gclid'))->toBeTruthy();
+    $google = Lead::query()->where('external_id', 'ld_01J9Z7B2M1')->first();
+    expect($google->has_gclid)->toBeTrue()
+        ->and($google->google_campaign_id)->toBe('20734150311')
+        ->and($google->google_ad_group_id)->toBe('158826551324')
+        ->and($google->google_criterion_id)->toBe('312040563871');
 });
 
 it('has no column that could hold lead PII', function () {
@@ -93,13 +96,13 @@ it('marks the source as auth-failed on 401', function () {
         ->and($this->source->fresh()->consecutive_failures)->toBe(1);
 });
 
-it('stays off until the feature flag is enabled', function () {
-    config(['vigilo.lodgely.enabled' => false]);
+it('stays off until URL and token are set', function () {
+    config(['vigilo.lodgely.token' => '']);
     Http::fake();
 
     $result = app(LeadSync::class)->sync($this->source);
 
-    expect($result['ok'])->toBeFalse()->and($result['error'])->toContain('VIGILO_LODGELY_ENABLED');
+    expect($result['ok'])->toBeFalse()->and($result['error'])->toContain('VIGILO_LODGELY_API_TOKEN');
     Http::assertNothingSent();
 });
 

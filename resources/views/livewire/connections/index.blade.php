@@ -45,6 +45,10 @@
                     <x-field :label="__('Manager account ID (login-customer-id)')" error="form.login_customer_id" :hint="__('Only when access goes through a manager (MCC) account. Defaults to VIGILO_GOOGLE_ADS_LOGIN_CUSTOMER_ID.')">
                         <input type="text" wire:model="form.login_customer_id" class="v-input" placeholder="555-000-1234">
                     </x-field>
+                @else
+                    <x-field :label="__('Conversion action types (optional)')" error="form.meta_conversion_action_types" :hint="__('Comma-separated, first match wins, e.g. offsite_conversion.custom.123456789. Leave empty to use VIGILO_META_CONVERSION_ACTION_TYPES.')">
+                        <input type="text" wire:model="form.meta_conversion_action_types" class="v-input" placeholder="lead, onsite_conversion.lead_grouped">
+                    </x-field>
                 @endif
                 <x-field :label="$isGoogle ? __('Refresh token override (optional)') : __('Access token override (optional)')" error="form.token" :hint="__('Leave empty to use the agency-wide token from the environment. Stored encrypted; never shown again.')">
                     <input type="password" wire:model="form.token" class="v-input" autocomplete="off">

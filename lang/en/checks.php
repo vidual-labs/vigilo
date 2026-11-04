@@ -3,7 +3,7 @@
 return [
     'conversion_drop' => [
         'name' => 'Conversion drop',
-        'description' => 'Conversions over the last 1 or 3 complete days are zero or far below the trailing baseline while the account keeps spending.',
+        'description' => 'Conversions over the last 1 or 3 complete days are zero or far below the trailing baseline while the account keeps spending. For Google, the most recent day is skipped by default because conversions arrive late.',
         'advice' => 'Check conversion tracking first: does the tag/pixel still fire, are the Google Ads conversion actions and Meta pixel/CAPI events active, was the website or consent banner changed, and does the form still submit?',
         'fields' => [
             'windows_days' => 'Windows (days)',
@@ -12,6 +12,7 @@ return [
             'min_window_spend' => 'Min. spend in window',
             'min_baseline_conversions' => 'Min. baseline conversions',
             'min_expected_conversions' => 'Min. expected conversions',
+            'google_skip_recent_days' => 'Google: skip most recent days (conversion lag)',
         ],
     ],
     'spend_without_leads' => [

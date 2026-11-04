@@ -1,15 +1,14 @@
 # lodgely → vigilo: lead-metadata contract v1
 
 **Status:** implemented on both sides. vigilo's client is
-`App\Domain\Leads\Lodgely\LodgelyLeadSource` (behind
-`VIGILO_LODGELY_ENABLED`, tested against `tests/Fixtures/lodgely/`).
+`App\Domain\Leads\Lodgely\LodgelyLeadSource` (active once
+`VIGILO_LODGELY_URL` and `VIGILO_LODGELY_API_TOKEN` are set, tested against
+`tests/Fixtures/lodgely/`).
 lodgely serves it from 0.59.0 as **LG-15** (`LeadMetadataFeed`,
 `LeadMetadataController`, contract test `LeadMetadataApiTest`). What lodgely
 sends today, where it is narrower than the contract allows, is listed in
-[lodgely 0.59.0 specifics](#lodgely-0590-specifics). Open questions that
-may extend it (keyword attribution for Phase 2) are in
-[OPEN-ITEMS.md](OPEN-ITEMS.md); the shared roadmap section is *Shared with
-vigilo* in both repos' ROADMAP.md.
+[lodgely specifics](#lodgely-specifics). Decisions that shape it are in
+the *Shared with vigilo* section of both repos' ROADMAP.md (V1 – V7).
 
 ## Why vigilo needs it
 
@@ -146,6 +145,7 @@ on a lead. The contract identifies a client by a **client key**:
 | `attribution.meta_campaign_id` / `meta_adset_id` / `meta_ad_id` / `meta_form_id` | string or null | no | Meta ids (Lead Ads, or from URL parameters). |
 | `attribution.has_gclid` | bool | no | A Google click id (gclid/gbraid/wbraid) was present. The id itself is **never** sent. |
 | `attribution.utm_source` / `utm_medium` / `utm_campaign` | string or null | no | Reserved for Phase 2 (campaign matching); vigilo v1 ignores them. |
+| `attribution.google_campaign_id` / `google_ad_group_id` / `google_criterion_id` | numeric string or null | no | Google ids from the ValueTrack final URL suffix (`{campaignid}`, `{adgroupid}`, `{targetid}` with `kwd-` stripped). Ids only: never keyword text, never a click id; vigilo drops anything that is not digits. Basis for keyword-level lead quality (VG-9, shared decision V5). Added 2026-11-04 as optional fields, so still contract v1. |
 | `flags.duplicate` / `qualified` / `contacted` / `organic` / `spam` | bool | no | Enrichment flags. `qualified` = `qualified_at` set; `contacted` = called or mailed. |
 | `deleted` | `true` | — | Tombstone: the lead was deleted in lodgely (e.g. GDPR erasure, retention purge). Only `id` and `updated_at` accompany it. vigilo deletes its row. |
 
@@ -206,11 +206,12 @@ token-free endpoint could share the *mapping* of clients to ad account ids.
 
 ---
 
-## lodgely 0.59.0 specifics
+## lodgely specifics
 
-What lodgely's first implementation sends, within the contract above:
+What lodgely sends today (0.59.0, plus the `google_*` fields from 0.60.0),
+within the contract above:
 
-| Field | lodgely 0.59.0 |
+| Field | lodgely 0.60.0 |
 |---|---|
 | `id` | `ld_<lead id>`. |
 | `client` key | `Str::slug(client_name)`. Names that differ only in case or punctuation (`Acme`, `acme`) share a key and are served together. Soft-deleted leads count, so a client whose leads were all purged still resolves. |
@@ -220,6 +221,7 @@ What lodgely's first implementation sends, within the contract above:
 | `attribution.meta_*` | From lodgely's `campaign_id` / `adset_id` / `ad_id` / `form_id` columns (Meta Lead Ads). |
 | `attribution.has_gclid` | Always `false` until LG-6 (decision Q-3 b). |
 | `attribution.utm_*` | Always `null` until LG-6. |
+| `attribution.google_*` | Present since 0.60.0, always `null` until LG-6 stores the ValueTrack ids per lead. |
 | `flags` | `duplicate`, `qualified`, `contacted`, `organic`. `spam` is not sent: lodgely has no spam marker. |
 | Tombstones | Every soft-deleted lead (manual delete, retention purge, Sheets dedupe) goes out once. A future hard delete (LG-11) must keep emitting one. |
 | Errors | `401` / `403` / `404` with `{"message": …}`; `422` for invalid `client` / `limit` / `updated_since`; `400` `Invalid cursor.`; `429` with `Retry-After`. |
