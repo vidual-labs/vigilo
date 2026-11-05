@@ -76,6 +76,10 @@ user-facing change gets an entry under **Unreleased**.
   settings and the *Checks* page stored everything before the bad field
   (name, budgets, lead source, earlier checks) and then showed the error.
   Now nothing is saved until every field is valid.
+- **Run statistics** (*Checks* → *Runs*, `vigilo:run`) of a single-client run
+  count only that client's new and resolved findings and fetch errors, and a
+  full run counts the clients it actually ran (demo clients are skipped
+  outside mock mode).
 
 ## [0.1.0] - 2026-10-20
 
