@@ -2,12 +2,12 @@
 <div class="divide-y divide-slate-100 dark:divide-slate-800">
     @foreach ($checks as $key => $check)
         <div class="py-4 first:pt-0 last:pb-0" wire:key="check-{{ $key }}">
-            <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
                 <div class="max-w-2xl">
                     <h3 class="text-sm font-semibold">{{ __('checks.'.$key.'.name') }}</h3>
                     <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ __('checks.'.$key.'.description') }}</p>
                 </div>
-                <select wire:model="checkForm.{{ $key }}.enabled" class="v-input w-auto" @disabled($readonly) aria-label="{{ __('Enabled') }}">
+                <select wire:model="checkForm.{{ $key }}.enabled" class="v-input w-auto shrink-0" @disabled($readonly) aria-label="{{ __('Enabled') }}">
                     <option value="">{{ __('Inherit') }} ({{ $inherited[$key]['enabled'] ? __('on') : __('off') }})</option>
                     <option value="1">{{ __('On') }}</option>
                     <option value="0">{{ __('Off') }}</option>
@@ -18,6 +18,10 @@
                     @php
                         $default = $inherited[$key]['values'][$field] ?? '';
                         $default = is_array($default) ? implode(', ', $default) : $default;
+                        // Shown the way the reader types it (the field accepts both).
+                        if (in_array($type, ['float', 'ratio'], true) && app()->getLocale() === 'de') {
+                            $default = str_replace('.', ',', (string) $default);
+                        }
                     @endphp
                     <x-field :label="__('checks.'.$key.'.fields.'.$field)" :error="'checkForm.'.$key.'.values.'.$field">
                         @if ($type === 'severity')

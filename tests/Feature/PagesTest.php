@@ -46,3 +46,12 @@ it('lets viewers read but hides operator-only pages', function () {
 it('shows the mock mode badge while simulating', function () {
     $this->actingAs($this->operator())->get('/findings')->assertSee('Mock mode');
 });
+
+it('shows inherited thresholds with the reader\'s decimal separator', function () {
+    $this->actingAs($this->operator(['locale' => 'de']))->get('/checks')
+        ->assertSee('placeholder="0,15"', false)
+        ->assertSee('placeholder="1, 3"', false);
+
+    $this->actingAs($this->operator(['locale' => 'en']))->get('/checks')
+        ->assertSee('placeholder="0.15"', false);
+});

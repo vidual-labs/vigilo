@@ -82,6 +82,9 @@ user-facing change gets an entry under **Unreleased**.
   outside mock mode).
 - **Undoing an acknowledgement shows as "Reopened"** in a finding's history,
   not as "Snooze ended".
+- **Check settings in German show inherited decimals with a comma** (`0,15`
+  instead of `0.15`), and the on/off selector of every check sits next to
+  its description instead of sometimes wrapping below it.
 
 ## [0.1.0] - 2026-10-20
 
