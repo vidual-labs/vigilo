@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\AdPlatforms\Enums\ConnectionStatus;
+use App\Domain\AdPlatforms\Services\AdDataSync;
 use App\Domain\Checks\Snapshot\SnapshotFactory;
 use App\Domain\Findings\Enums\FindingEventType;
 use App\Domain\Findings\Enums\FindingStatus;
@@ -257,4 +258,42 @@ it('records a manual reopen as such, not as the end of a snooze', function () {
         ->and($event->data)->toBe(['from' => 'acknowledged'])
         ->and($event->user_id)->toBe($operator->id)
         ->and($event->type->label())->toBe('Reopened');
+});
+
+it('forgets the old account\'s data when a connection points somewhere else', function (array $change) {
+    $operator = $this->operator();
+    $client = Client::factory()->create();
+    $connection = AdConnection::factory()->for($client)->create(['account_id' => '1234567890']);
+    app(AdDataSync::class)->sync($connection);
+    expect($connection->metrics()->count())->toBeGreaterThan(0)->and($connection->fresh()->last_success_at)->not->toBeNull();
+
+    $component = Livewire::actingAs($operator)->test(ConnectionIndex::class)->call('edit', $connection->id);
+    foreach ($change as $field => $value) {
+        $component->set('form.'.$field, $value);
+    }
+    $component->call('save')->assertHasNoErrors();
+
+    // Until the next fetch nothing about the new account is known: the old
+    // account's numbers must not count, nor make the connection look fresh.
+    $connection->refresh();
+    expect($connection->metrics()->count())->toBe(0)
+        ->and($connection->ads()->count())->toBe(0)
+        ->and($connection->last_success_at)->toBeNull()
+        ->and($connection->status)->toBe(ConnectionStatus::Unknown)
+        ->and($connection->setting('account_name'))->toBeNull()
+        ->and($connection->mockScenario())->toBe('healthy');
+})->with([
+    'another account' => [fn () => ['account_id' => '999-888-7777']],
+    'another client' => [fn () => ['client_id' => (string) Client::factory()->create()->id]],
+]);
+
+it('keeps a connection\'s data when only its name changes', function () {
+    $connection = AdConnection::factory()->create();
+    app(AdDataSync::class)->sync($connection);
+    $rows = $connection->metrics()->count();
+
+    Livewire::actingAs($this->operator())->test(ConnectionIndex::class)
+        ->call('edit', $connection->id)->set('form.name', 'Brand campaigns')->call('save')->assertHasNoErrors();
+
+    expect($connection->metrics()->count())->toBe($rows)->and($connection->fresh()->last_success_at)->not->toBeNull();
 });

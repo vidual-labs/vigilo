@@ -55,6 +55,10 @@ user-facing change gets an entry under **Unreleased**.
   empty lead list looked fresh until the first successful fetch. A changed
   key or source now starts over completely (no cursor, no leads, no health
   state, no findings of the old feed).
+- **Pointing a connection at another ad account or client starts it over.**
+  The old account's metrics, ads and last success stayed, so until the next
+  fetch the checks judged the old numbers as current (moved to another
+  client, a connection showed 0 % spend, "spending behind plan").
 - **Conversion drop no longer says "yesterday" for Google.** Google's
   windows end a day earlier (`google_skip_recent_days`), so the title now
   names the day it judged ("no conversions on 3 Nov 2026", "in the 3 days up
