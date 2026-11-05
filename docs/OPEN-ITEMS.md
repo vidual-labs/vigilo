@@ -77,15 +77,45 @@ Then:
   lead to another client; LG-4 will keep old slugs as aliases and tombstone
   moved leads (shared ROADMAP, follow-ups).
 - Compare lead counts: vigilo's countable leads for a client and month must
-  match lodgely's *Lodgely leads* KPI for the same range (shared V6).
+  match lodgely's *Lodgely leads* KPI for the same range (shared V6). Mind
+  the day boundaries: lodgely counts by `created_at` in its `APP_TIMEZONE`
+  (default UTC), vigilo by `submitted_at` in the client's timezone, so leads
+  from the first and last hours of a month can land in different months.
+- Replace the hand-written fixtures' cursor (`{"u": ISO, "i": "ld_…"}`) with a
+  real one: lodgely's is `{"u": "Y-m-d H:i:s", "i": <int>}`, base64url
+  without padding. Opaque to vigilo, so nothing breaks; the fixtures just
+  should look like the real thing.
+
+### T-L7 · A lodgely client without leads answers 404
+**Repo:** both · **Effort:** S · **Needs a decision (contract)**
+Until LG-4, lodgely only knows a client key once a lead with that
+`client_name` exists. A newly onboarded client answers `404 Unknown client`,
+so vigilo never gets a successful fetch: *spend without leads* cannot fire
+for exactly the case it is for (ads live, form broken from day one), and
+*connection health* only reports "no successful fetch" after 26 hours.
+Options: (a) wait for LG-4 and a client list; (b) lodgely answers `200` with
+`data: []` for a well-formed key it does not know yet (loses typo
+detection); (c) vigilo raises a dedicated "lodgely does not know this
+client key" finding at once on a `404`, without waiting for the stale
+threshold (vigilo only, no contract change).
+
+### T-L8 · Same-second updates can slip past the cursor
+**Repo:** lodgely · **Effort:** S
+lodgely's cursor is `(updated_at, id)` with second resolution. A lead
+updated in the same second as the last item of a page, but with a lower id,
+is behind the cursor and never sent (until it changes again); the same goes
+for a write whose transaction commits after a read that already covered its
+`updated_at`. Rare with daily fetches. Fix on lodgely's side, e.g. only serve
+rows with `updated_at` older than the current second, or let the cursor lag
+by a few seconds.
 
 ---
 
 ## 2. Open questions
 
 Q-1 – Q-3 were decided on 2026-10-20, Q-4 – Q-6 and Q-9 – Q-13 on
-2026-11-04 (see the table above). What is left needs the owner to act, not
-to decide.
+2026-11-04 (see the table above). Q-7 and Q-8 need the owner to act;
+Q-14 and Q-15 (found while testing on 2026-11-05) need a decision.
 
 ### Q-7 · Google Ads developer token access level
 Real accounts can only be read with **Basic** (or Standard) access; a fresh token is test-only.
@@ -94,6 +124,18 @@ Real accounts can only be read with **Basic** (or Standard) access; a fresh toke
 ### Q-8 · Real Google Ads / Meta accounts for a live test
 The live adapters are tested only against fixtures built from the API documentation (see §3).
 **Ask:** read access to one real Google Ads customer (through the MCC) and one Meta ad account, to run *Test* and *Fetch now* and record anonymised fixtures. Best done in the same session as T-L4.
+
+### Q-14 · Do organic Meta leads count towards Meta CPL?
+vigilo attributes a lead to Meta when it has a Meta id **or** `source_type`
+`meta_lead_ads`, and ignores `flags.organic`. Organic Lead Ads leads (no ad
+id) therefore lower Meta's cost per lead; lodgely's reporting attributes by
+`campaign_id` only. **Question:** exclude `flags.organic` from platform
+attribution in *CPL spike* (vigilo only, no contract change)? Related to V6.
+
+### Q-15 · Should viewers see webhook URLs?
+*Notifications* shows every webhook URL to viewers too. A Slack or n8n URL
+often *is* the secret (anyone who has it can post). **Question:** mask the
+URL for viewers (show host only), or keep "viewers see everything"?
 
 ### Threshold calibration (ongoing)
 All check thresholds are educated guesses (see `config/vigilo.php`). Review them after a few weeks of real data, starting with `google_skip_recent_days` and `min_expected_conversions` for *conversion drop*.
