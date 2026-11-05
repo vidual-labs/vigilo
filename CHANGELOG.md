@@ -80,6 +80,8 @@ user-facing change gets an entry under **Unreleased**.
   count only that client's new and resolved findings and fetch errors, and a
   full run counts the clients it actually ran (demo clients are skipped
   outside mock mode).
+- **Undoing an acknowledgement shows as "Reopened"** in a finding's history,
+  not as "Snooze ended".
 
 ## [0.1.0] - 2026-10-20
 

@@ -2,6 +2,7 @@
 
 use App\Domain\AdPlatforms\Enums\ConnectionStatus;
 use App\Domain\Checks\Snapshot\SnapshotFactory;
+use App\Domain\Findings\Enums\FindingEventType;
 use App\Domain\Findings\Enums\FindingStatus;
 use App\Livewire\Checks\CheckSettings;
 use App\Livewire\Clients\ClientEdit;
@@ -240,4 +241,20 @@ it('saves nothing when one check threshold is invalid', function () {
 
     expect($client->fresh()->name)->toBe('Huber Steuerberatung')
         ->and(CheckSetting::query()->count())->toBe(0);
+});
+
+it('records a manual reopen as such, not as the end of a snooze', function () {
+    $operator = $this->operator();
+    $finding = Finding::factory()->create();
+
+    Livewire::actingAs($operator)->test(Inbox::class)
+        ->call('acknowledge', $finding->id)
+        ->call('reopen', $finding->id);
+
+    $event = $finding->events()->first();
+    expect($finding->fresh()->status)->toBe(FindingStatus::Open)
+        ->and($event->type)->toBe(FindingEventType::ReopenedManually)
+        ->and($event->data)->toBe(['from' => 'acknowledged'])
+        ->and($event->user_id)->toBe($operator->id)
+        ->and($event->type->label())->toBe('Reopened');
 });
