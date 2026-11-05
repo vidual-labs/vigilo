@@ -55,6 +55,10 @@ user-facing change gets an entry under **Unreleased**.
   empty lead list looked fresh until the first successful fetch. A changed
   key or source now starts over completely (no cursor, no leads, no health
   state, no findings of the old feed).
+- **Conversion drop no longer says "yesterday" for Google.** Google's
+  windows end a day earlier (`google_skip_recent_days`), so the title now
+  names the day it judged ("no conversions on 3 Nov 2026", "in the 3 days up
+  to 3 Nov 2026"). Meta findings keep "yesterday" / "the last N days".
 
 ## [0.1.0] - 2026-10-20
 

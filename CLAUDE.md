@@ -79,9 +79,9 @@ via `LandingPageProbeService`) → `RunClientChecks` (`CheckRunner` builds a
    - Build findings with `$this->draft($snapshot, $subject, Severity, 'title', params, evidence, platform)`.
      `$subject` makes the dedupe key `<check>:<client>:<subject>` — the same
      problem must always produce the same subject.
-   - Params and evidence values that are money/percent/factor/translations
+   - Params and evidence values that are money/percent/factor/dates/translations
      use the typed helpers in `App\Support\Format` (`m()`, `p()`, `x()`,
-     `n()`, `t()`), so they render in the reader's language.
+     `n()`, `d()`, `t()`), so they render in the reader's language.
    - If you cannot evaluate a subject (stale data: `! $snapshot->isFresh(...)`),
      call `$result->keep($dedupeKeyPrefix)` so open findings are not
      auto-resolved.

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\Platform;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Number;
 
@@ -30,6 +31,16 @@ final class Format
         return (string) Number::percentage($ratio * 100, $decimals, null, self::intlLocale($locale));
     }
 
+    /** A calendar day (Y-m-d): "3 Nov 2026" in English, "3. Nov 2026" in German. */
+    public static function date(string $date, ?string $locale = null): string
+    {
+        try {
+            return CarbonImmutable::parse($date)->locale(self::intlLocale($locale))->isoFormat('ll');
+        } catch (\Throwable) {
+            return $date;
+        }
+    }
+
     public static function param(mixed $value, ?string $locale = null): string
     {
         if (! is_array($value)) {
@@ -43,6 +54,7 @@ final class Format
             'number' => self::number((float) $raw, (int) ($value['decimals'] ?? 0), $locale),
             'percent' => self::percent((float) $raw, (int) ($value['decimals'] ?? 0), $locale),
             'factor' => self::number((float) $raw, 1, $locale).'×',
+            'date' => self::date((string) $raw, $locale),
             'platform' => Platform::tryFrom((string) $raw)?->label() ?? (string) $raw,
             // Translated when read, so the reader's language wins over the run's.
             'trans' => (string) __((string) $raw, array_map(fn ($p) => self::param($p, $locale), (array) ($value['params'] ?? [])), $locale),
@@ -70,6 +82,12 @@ final class Format
     public static function p(float $ratio): array
     {
         return ['type' => 'percent', 'value' => round($ratio, 4)];
+    }
+
+    /** @return array<string, mixed> a calendar day (Y-m-d) */
+    public static function d(string $date): array
+    {
+        return ['type' => 'date', 'value' => $date];
     }
 
     /** @return array<string, mixed> */
