@@ -28,7 +28,9 @@ it('shows findings with translated titles', function () {
         ->assertSee('keine Conversions', false);
 
     $this->actingAs($this->operator(['locale' => 'en']))->get('/findings')
-        ->assertSee('no conversions yesterday', false);
+        // Alpenblick's Google account: the skipped day is named, not "yesterday".
+        ->assertSee('no conversions on', false)
+        ->assertDontSee('no conversions yesterday', false);
 });
 
 it('lets viewers read but hides operator-only pages', function () {
