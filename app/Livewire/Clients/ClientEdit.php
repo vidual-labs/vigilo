@@ -99,6 +99,8 @@ class ClientEdit extends Component
             'leadKey' => ['nullable', 'required_if:leadType,lodgely', 'string', 'max:191', 'regex:/^[A-Za-z0-9_\-.:]+$/'],
             'leadScenario' => ['nullable', Rule::in(MockScenarios::LEAD_SCENARIOS)],
         ]);
+        // Thresholds are validated before anything is stored, too.
+        $checks = $this->validatedCheckForm();
 
         $attributes = [
             'name' => $data['name'],
@@ -124,7 +126,7 @@ class ClientEdit extends Component
         }
 
         $this->saveLeadSource();
-        $this->saveCheckForm($this->client);
+        $this->saveCheckForm($this->client, $checks);
 
         session()->flash('status', __('Client saved.'));
         $this->redirectRoute('clients.edit', $this->client, navigate: true);

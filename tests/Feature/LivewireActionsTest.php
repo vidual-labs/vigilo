@@ -220,3 +220,24 @@ it('treats email addresses case-insensitively when checking for duplicates', fun
 
     expect(User::query()->count())->toBe(2)->and($operator->fresh()->email)->toBe('ops@agency.example');
 });
+
+it('saves nothing when one check threshold is invalid', function () {
+    $operator = $this->operator();
+    $client = Client::factory()->create(['name' => 'Huber Steuerberatung']);
+
+    Livewire::actingAs($operator)->test(ClientEdit::class, ['client' => $client])
+        ->set('name', 'Huber Steuerberatung GmbH')
+        ->set('checkForm.connection_health.values.stale_hours', '30')
+        ->set('checkForm.budget_pacing.values.min_day_of_month', 'soon')
+        ->call('save')
+        ->assertHasErrors('checkForm.budget_pacing.values.min_day_of_month');
+
+    Livewire::actingAs($operator)->test(CheckSettings::class)
+        ->set('checkForm.connection_health.values.stale_hours', '30')
+        ->set('checkForm.landing_page.values.slow_ms', 'fast')
+        ->call('save')
+        ->assertHasErrors('checkForm.landing_page.values.slow_ms');
+
+    expect($client->fresh()->name)->toBe('Huber Steuerberatung')
+        ->and(CheckSetting::query()->count())->toBe(0);
+});

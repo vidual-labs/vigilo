@@ -72,6 +72,10 @@ user-facing change gets an entry under **Unreleased**.
 - **Adding a user, or changing your email, with an address that already
   exists in different capitals** (`Jana@…` for `jana@…`) shows "already
   taken" instead of a server error.
+- **An invalid check threshold no longer saves half the form.** Client
+  settings and the *Checks* page stored everything before the bad field
+  (name, budgets, lead source, earlier checks) and then showed the error.
+  Now nothing is saved until every field is valid.
 
 ## [0.1.0] - 2026-10-20
 

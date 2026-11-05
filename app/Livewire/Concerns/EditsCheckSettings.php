@@ -38,9 +38,18 @@ trait EditsCheckSettings
         }
     }
 
-    protected function saveCheckForm(?Client $client): void
+    /**
+     * Parses and validates the whole form before anything is stored, so one
+     * bad value never leaves half of the settings saved.
+     *
+     * @return array<string, array{enabled: ?bool, thresholds: array<string, mixed>}>
+     *
+     * @throws ValidationException
+     */
+    protected function validatedCheckForm(): array
     {
         $errors = [];
+        $parsed = [];
         foreach (app(CheckRegistry::class)->all() as $key => $check) {
             $form = $this->checkForm[$key] ?? ['enabled' => '', 'values' => []];
             $thresholds = [];
@@ -66,16 +75,31 @@ trait EditsCheckSettings
                 $thresholds[$field] = ThresholdResolver::cast($type, $raw);
             }
 
-            $enabled = match ($form['enabled']) {
-                '1' => true,
-                '0' => false,
-                default => null,
-            };
+            $parsed[$key] = [
+                'enabled' => match ($form['enabled']) {
+                    '1' => true,
+                    '0' => false,
+                    default => null,
+                },
+                'thresholds' => $thresholds,
+            ];
+        }
 
-            if ($errors !== []) {
-                continue;
-            }
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
 
+        return $parsed;
+    }
+
+    /**
+     * @param  array<string, array{enabled: ?bool, thresholds: array<string, mixed>}>|null  $parsed  from validatedCheckForm()
+     *
+     * @throws ValidationException
+     */
+    protected function saveCheckForm(?Client $client, ?array $parsed = null): void
+    {
+        foreach ($parsed ?? $this->validatedCheckForm() as $key => ['enabled' => $enabled, 'thresholds' => $thresholds]) {
             if ($enabled === null && $thresholds === []) {
                 CheckSetting::query()->where('check_key', $key)
                     ->when($client, fn ($q) => $q->where('client_id', $client?->id), fn ($q) => $q->whereNull('client_id'))
@@ -88,10 +112,6 @@ trait EditsCheckSettings
                 ['client_id' => $client?->id, 'check_key' => $key],
                 ['enabled' => $enabled, 'thresholds' => $thresholds],
             );
-        }
-
-        if ($errors !== []) {
-            throw ValidationException::withMessages($errors);
         }
     }
 
