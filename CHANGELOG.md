@@ -59,6 +59,11 @@ user-facing change gets an entry under **Unreleased**.
   windows end a day earlier (`google_skip_recent_days`), so the title now
   names the day it judged ("no conversions on 3 Nov 2026", "in the 3 days up
   to 3 Nov 2026"). Meta findings keep "yesterday" / "the last N days".
+- **A landing page that fails to load once no longer resolves its other
+  findings.** A slow page that timed out, or a page whose probe did not run
+  (older than 48 hours), auto-resolved its *slow*, *redirects*, *off-site*,
+  *insecure* and certificate findings, which then reopened and alerted again
+  the next day. They now stay as they are until the page can be judged.
 
 ## [0.1.0] - 2026-10-20
 

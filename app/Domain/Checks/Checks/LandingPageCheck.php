@@ -16,7 +16,11 @@ use App\Support\Format;
  */
 class LandingPageCheck extends BaseCheck
 {
-    /** Probes older than this are ignored (URL no longer in use). */
+    /**
+     * Probes older than this are not judged. The probe service drops URLs no
+     * longer in use, so an old probe means probing did not run: its findings
+     * are kept, not resolved.
+     */
     private const MAX_PROBE_AGE_HOURS = 48;
 
     public function key(): string
@@ -39,22 +43,34 @@ class LandingPageCheck extends BaseCheck
     {
         $result = new CheckResult;
         $tlsHosts = [];
+        // Hosts with a page that could not be judged: their certificate
+        // finding stays unless another page of the host tells us more.
+        $tlsUnknown = [];
 
         foreach ($snapshot->probes as $probe) {
+            $subject = 'url:'.$probe->urlHash;
+            $host = (string) parse_url($probe->finalUrl ?: $probe->url, PHP_URL_HOST);
+
             if ($probe->checkedAt === null || $probe->checkedAt->diffInHours($snapshot->now, true) > self::MAX_PROBE_AGE_HOURS) {
+                $result->keep($this->subjectKey($snapshot, $subject.':'));
+                $tlsUnknown[$host] = true;
+
                 continue;
             }
-            $subject = 'url:'.$probe->urlHash;
             $params = ['url' => self::short($probe->url)];
             $evidence = $this->evidence($snapshot, $probe);
 
             if ($probe->failed()) {
+                // A page that did not load says nothing about its redirects,
+                // speed or certificate: keep those findings as they are.
+                $result->keep($this->subjectKey($snapshot, $subject.':'));
+                if ($probe->tlsExpiresAt === null) {
+                    $tlsUnknown[$host] = true;
+                }
+                // One failure may be a blip; alert from the configured count on.
                 if ($probe->consecutiveFailures >= max(1, (int) $thresholds['failures_before_alert'])) {
                     $result->add($this->draft($snapshot, $subject.':down', Severity::Critical, 'down',
                         $params + ['status' => $probe->statusCode ? (string) $probe->statusCode : Format::t('no response')], $evidence));
-                } else {
-                    // One failure may be a blip; neither alert nor resolve yet.
-                    $result->keep($this->subjectKey($snapshot, $subject.':down'));
                 }
             } else {
                 if ($probe->redirectCount > (int) $thresholds['max_redirects']) {
@@ -74,10 +90,15 @@ class LandingPageCheck extends BaseCheck
                 }
             }
 
-            $host = (string) parse_url($probe->finalUrl ?: $probe->url, PHP_URL_HOST);
             if ($probe->tlsExpiresAt !== null && $host !== '' && ! isset($tlsHosts[$host])) {
                 $tlsHosts[$host] = true;
                 $this->tls($result, $snapshot, $thresholds, $host, $probe);
+            }
+        }
+
+        foreach (array_keys(array_diff_key($tlsUnknown, $tlsHosts)) as $host) {
+            if ($host !== '') {
+                $result->keep($this->subjectKey($snapshot, 'tls:'.$host));
             }
         }
 
