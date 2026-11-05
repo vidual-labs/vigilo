@@ -64,6 +64,11 @@ user-facing change gets an entry under **Unreleased**.
   (older than 48 hours), auto-resolved its *slow*, *redirects*, *off-site*,
   *insecure* and certificate findings, which then reopened and alerted again
   the next day. They now stay as they are until the page can be judged.
+- ***Spend without leads* is no longer resolved by a failed fetch.** When one
+  ad account could not be fetched and the others alone spent too little, the
+  open finding was resolved although the missing account may be the one
+  spending. It now stays open until vigilo can see all accounts again or a
+  lead arrives.
 
 ## [0.1.0] - 2026-10-20
 

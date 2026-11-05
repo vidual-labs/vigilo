@@ -50,14 +50,18 @@ class SpendWithoutLeadsCheck extends BaseCheck
             $spend += $amount;
             $byPlatform[$connection->platform->value] = ($byPlatform[$connection->platform->value] ?? 0) + $amount;
         }
-        if ($spend < (float) $thresholds['min_spend']) {
-            return $result;
-        }
-
         $lastLead = $snapshot->lastLeadAt();
         $silentSince = $lastLead ?? $source->createdAt;
         if ($silentSince === null || $silentSince->greaterThan($cutoff)) {
             return $result;
+        }
+
+        if ($spend < (float) $thresholds['min_spend']) {
+            // Too little spend on the accounts we can see — unless an account
+            // we could not fetch may be the one spending.
+            $staleAccounts = count($connections) < count($snapshot->activeConnections());
+
+            return $staleAccounts ? $result->keep($this->subjectKey($snapshot, $subject)) : $result;
         }
 
         $evidence = [
