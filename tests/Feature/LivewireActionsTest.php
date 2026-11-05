@@ -198,3 +198,25 @@ it('starts the lead source over when its feed changes', function () {
     $snapshot = app(SnapshotFactory::class)->build($client->fresh());
     expect($snapshot->isFresh($snapshot->leadSource))->toBeFalse();
 });
+
+it('treats email addresses case-insensitively when checking for duplicates', function () {
+    $operator = $this->operator(['email' => 'ops@agency.example']);
+    $this->viewer(['email' => 'jana@agency.example']);
+
+    Livewire::actingAs($operator)->test(UserIndex::class)
+        ->set('name', 'Jana again')->set('email', 'Jana@Agency.example')->set('role', 'viewer')
+        ->call('create')
+        ->assertHasErrors('email');
+
+    Livewire::actingAs($operator)->test(Profile::class)
+        ->set('email', 'JANA@agency.example')
+        ->call('save')
+        ->assertHasErrors('email');
+
+    Livewire::actingAs($operator)->test(Profile::class)
+        ->set('email', 'OPS@agency.example')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(User::query()->count())->toBe(2)->and($operator->fresh()->email)->toBe('ops@agency.example');
+});

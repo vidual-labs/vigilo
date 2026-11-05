@@ -42,6 +42,8 @@ class Profile extends Component
     public function save(): void
     {
         $user = $this->user();
+        // Stored lowercase, so compare lowercase (see UserIndex::create()).
+        $this->email = strtolower(trim($this->email));
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
@@ -51,7 +53,7 @@ class Profile extends Component
         ]);
         $user->update([
             'name' => $data['name'],
-            'email' => strtolower($data['email']),
+            'email' => $data['email'],
             'locale' => $data['locale'],
             'receives_digest' => $this->receivesDigest,
             'notify_critical' => $this->notifyCritical,

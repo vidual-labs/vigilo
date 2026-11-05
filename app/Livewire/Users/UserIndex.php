@@ -36,6 +36,9 @@ class UserIndex extends Component
     public function create(): void
     {
         $this->authorizeOperator();
+        // Stored lowercase, so compare lowercase: "Jana@…" must not slip past
+        // the unique rule and hit the database constraint.
+        $this->email = strtolower(trim($this->email));
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
@@ -46,13 +49,12 @@ class UserIndex extends Component
         $role = UserRole::from($data['role']);
         User::query()->create([
             ...$data,
-            'email' => strtolower($data['email']),
             'password' => $password,
             'receives_digest' => $role === UserRole::Operator,
             'must_change_password' => true,
         ]);
         $this->revealedPassword = $password;
-        $this->revealedFor = strtolower($data['email']);
+        $this->revealedFor = $data['email'];
         $this->reset('name', 'email');
     }
 
