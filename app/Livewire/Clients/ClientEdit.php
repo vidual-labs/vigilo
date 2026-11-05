@@ -146,9 +146,12 @@ class ClientEdit extends Component
             'settings' => array_merge($source->settings ?? [], ['mock_scenario' => $this->leadScenario ?: 'healthy']),
         ];
         if ($source && ($source->type->value !== $this->leadType || $source->external_key !== $attributes['external_key'])) {
-            // Different feed: start over, and drop leads from the old one.
+            // Different feed: start over with a new source — no cursor, no
+            // leads and none of the old feed's health. Its last success would
+            // make the new, still unfetched feed look fresh (and silent), and
+            // its findings belong to the old feed.
             $source->leads()->delete();
-            $attributes['cursor'] = null;
+            $source->delete();
         }
         $this->client?->leadSource()->updateOrCreate([], $attributes);
     }

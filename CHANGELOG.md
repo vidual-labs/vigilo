@@ -50,6 +50,11 @@ user-facing change gets an entry under **Unreleased**.
   whose password was reset: they are sent to the profile page right away.
 - **The plain-text part of the digest and critical mails** no longer shows
   HTML entities (`Brenner &amp; Partner`).
+- **Changing a client's lodgely key no longer raises a false *spend without
+  leads* alarm.** The new feed started with the old feed's health, so its
+  empty lead list looked fresh until the first successful fetch. A changed
+  key or source now starts over completely (no cursor, no leads, no health
+  state, no findings of the old feed).
 
 ## [0.1.0] - 2026-10-20
 

@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\AdPlatforms\Enums\ConnectionStatus;
+use App\Domain\Checks\Snapshot\SnapshotFactory;
 use App\Domain\Findings\Enums\FindingStatus;
 use App\Livewire\Checks\CheckSettings;
 use App\Livewire\Clients\ClientEdit;
@@ -162,4 +164,37 @@ it('changes the password and clears the forced change', function () {
         ->assertRedirect(route('findings.index'));
 
     expect($user->fresh()->must_change_password)->toBeFalse();
+});
+
+it('starts the lead source over when its feed changes', function () {
+    $operator = $this->operator();
+    $client = Client::factory()->create();
+    $old = $client->leadSource()->create([
+        'type' => 'lodgely', 'external_key' => 'brenner-alt', 'cursor' => 'eyJ1IjoiMjAyNi0xMS0wNSJ9',
+        'status' => ConnectionStatus::Ok, 'last_success_at' => now(), 'last_attempt_at' => now(),
+    ]);
+    $old->leads()->create(['client_id' => $client->id, 'external_id' => 'ld_1', 'submitted_at' => now()->subHour(), 'status' => 'new']);
+    $old->forceFill(['created_at' => now()->subMonths(3)])->save();
+
+    // Same feed: nothing is reset.
+    Livewire::actingAs($operator)->test(ClientEdit::class, ['client' => $client])->call('save')->assertHasNoErrors();
+    expect($client->fresh()->leadSource->cursor)->toBe('eyJ1IjoiMjAyNi0xMS0wNSJ9');
+
+    Livewire::actingAs($operator)->test(ClientEdit::class, ['client' => $client])
+        ->set('leadKey', 'kanzlei-brenner-partner')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $source = $client->fresh()->leadSource;
+    expect($source->external_key)->toBe('kanzlei-brenner-partner')
+        ->and($source->cursor)->toBeNull()
+        ->and($source->leads()->count())->toBe(0)
+        // The old feed's health must not make the new, unfetched one look fresh
+        // (spend without leads would fire on the empty lead list) or old.
+        ->and($source->status)->toBe(ConnectionStatus::Unknown)
+        ->and($source->last_success_at)->toBeNull()
+        ->and($source->created_at->greaterThan(now()->subMinute()))->toBeTrue();
+
+    $snapshot = app(SnapshotFactory::class)->build($client->fresh());
+    expect($snapshot->isFresh($snapshot->leadSource))->toBeFalse();
 });

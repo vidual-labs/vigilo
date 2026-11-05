@@ -323,6 +323,8 @@ To connect a lodgely 0.59.0+ install:
 3. Set each client's lead source to *lodgely* with its client key: the slug
    of the lodgely client name (`Kanzlei Brenner & Partner` →
    `kanzlei-brenner-partner`). *Test* calls the feed with `limit=1`.
+   Changing a client's key (or its source) starts the feed over: the stored
+   leads go, and the next fetch reads the last 60 days again.
 
 In mock mode the feed is simulated. The *spend without leads* check and
 lead-based CPL need a lead source; all other checks work without one.
