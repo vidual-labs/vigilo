@@ -42,6 +42,13 @@ user-facing change gets an entry under **Unreleased**.
   section mirrored in lodgely's ROADMAP, and OPEN-ITEMS records the decisions
   on Q-1 – Q-3.
 
+### Fixed
+
+- **A deactivated user is locked out of pages that are already open.** Until
+  now only the next page load signed them out; filters and other Livewire
+  requests on an open page kept returning data. The same applies to a user
+  whose password was reset: they are sent to the profile page right away.
+
 ## [0.1.0] - 2026-10-20
 
 First release: the watchdog (Phase 1).
