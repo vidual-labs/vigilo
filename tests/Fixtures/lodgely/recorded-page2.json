@@ -1,0 +1,121 @@
+{
+  "contract_version": 1,
+  "client": "northwind-studio",
+  "data": [
+    {
+      "id": "ld_77",
+      "submitted_at": "2026-11-05T17:33:25Z",
+      "updated_at": "2026-11-05T17:33:25Z",
+      "status": "new",
+      "status_changed_at": null,
+      "source_type": "openflow",
+      "attribution": {
+        "meta_campaign_id": null,
+        "meta_adset_id": null,
+        "meta_ad_id": null,
+        "meta_form_id": null,
+        "has_gclid": false,
+        "utm_source": null,
+        "utm_medium": null,
+        "utm_campaign": null,
+        "google_campaign_id": null,
+        "google_ad_group_id": null,
+        "google_criterion_id": null
+      },
+      "flags": {
+        "duplicate": false,
+        "qualified": false,
+        "contacted": false,
+        "organic": false
+      }
+    },
+    {
+      "id": "ld_78",
+      "submitted_at": "2026-11-05T17:33:25Z",
+      "updated_at": "2026-11-05T17:33:25Z",
+      "status": "new",
+      "status_changed_at": null,
+      "source_type": "openflow",
+      "attribution": {
+        "meta_campaign_id": null,
+        "meta_adset_id": null,
+        "meta_ad_id": null,
+        "meta_form_id": null,
+        "has_gclid": false,
+        "utm_source": null,
+        "utm_medium": null,
+        "utm_campaign": null,
+        "google_campaign_id": null,
+        "google_ad_group_id": null,
+        "google_criterion_id": null
+      },
+      "flags": {
+        "duplicate": false,
+        "qualified": false,
+        "contacted": false,
+        "organic": false
+      }
+    },
+    {
+      "id": "ld_80",
+      "submitted_at": "2026-11-05T17:33:25Z",
+      "updated_at": "2026-11-05T17:33:25Z",
+      "status": "new",
+      "status_changed_at": null,
+      "source_type": "openflow",
+      "attribution": {
+        "meta_campaign_id": null,
+        "meta_adset_id": null,
+        "meta_ad_id": null,
+        "meta_form_id": null,
+        "has_gclid": false,
+        "utm_source": null,
+        "utm_medium": null,
+        "utm_campaign": null,
+        "google_campaign_id": null,
+        "google_ad_group_id": null,
+        "google_criterion_id": null
+      },
+      "flags": {
+        "duplicate": false,
+        "qualified": false,
+        "contacted": false,
+        "organic": false
+      }
+    },
+    {
+      "id": "ld_81",
+      "submitted_at": "2026-11-05T17:34:00Z",
+      "updated_at": "2026-11-05T17:34:00Z",
+      "status": "new",
+      "status_changed_at": null,
+      "source_type": "openflow",
+      "attribution": {
+        "meta_campaign_id": null,
+        "meta_adset_id": null,
+        "meta_ad_id": null,
+        "meta_form_id": null,
+        "has_gclid": false,
+        "utm_source": null,
+        "utm_medium": null,
+        "utm_campaign": null,
+        "google_campaign_id": null,
+        "google_ad_group_id": null,
+        "google_criterion_id": null
+      },
+      "flags": {
+        "duplicate": false,
+        "qualified": false,
+        "contacted": false,
+        "organic": false
+      }
+    },
+    {
+      "id": "ld_79",
+      "deleted": true,
+      "updated_at": "2026-11-05T17:37:23Z"
+    }
+  ],
+  "next_cursor": "eyJ1IjoiMjAyNi0xMS0wNSAxNzozNzoyMyIsImkiOjc5fQ",
+  "has_more": false
+}

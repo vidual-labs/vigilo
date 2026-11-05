@@ -7,8 +7,9 @@ lead-metadata API vigilo reads (**LG-15**, contract v1); lodgely 0.60.0 adds
 the Google ValueTrack id fields. This file lists everything that is still
 open: tasks, unanswered questions and known gaps.
 
-**Next session:** run both stacks together (T-L4), with the real ad accounts
-from Q-7 / Q-8 in the same session. The contract is
+**Next session:** finish T-L4 with the real ad accounts from Q-7 / Q-8 and
+both stacks in Docker. The lead side of T-L4 ran against a live lodgely on
+2026-11-05 (see T-L4). The contract is
 [LODGELY-CONTRACT.md](LODGELY-CONTRACT.md); the shared roadmap section is
 *Shared with vigilo* at the end of [ROADMAP.md](../ROADMAP.md), mirrored in
 lodgely's ROADMAP.
@@ -63,28 +64,38 @@ table).
 lodgely plans a real Client model (LG-4, decision D4). When it lands, the contract's `client` parameter should take that model's stable key. vigilo needs no code change, only the key entered per client. Optionally add `GET /api/v1/clients` (contract → "Optional, later") so vigilo can offer a dropdown instead of a text field. That needs a small vigilo UI change in `ClientEdit`.
 
 ### T-L4 · End-to-end test with both stacks
-**Repo:** both · **Effort:** S · **Depends on:** lodgely 0.60.0
-1. Run lodgely and vigilo side by side in Docker.
-2. Create a read-only token in lodgely (*Settings → API tokens*) and set `VIGILO_LODGELY_URL` and `VIGILO_LODGELY_API_TOKEN`.
-3. Map a client key and run `vigilo:run --sync`.
+**Repo:** both · **Effort:** S · **Depends on:** Q-7 / Q-8
+**Done on 2026-11-05** (lodgely 0.61.5 and vigilo on the host with `php
+artisan serve`, Postgres, mock mode off, no ad connections; lodgely fed by
+OpenFlow 0.48 forms booking into calon 0.3): token + URL in `.env`, a client
+mapped in the UI, *Test connection*, `vigilo:run --sync` and *Fetch now*
+through the queue worker. Verified:
+- a lead deleted in lodgely (inbox *Delete*) reaches vigilo as a tombstone
+  and is gone after the next sync;
+- no PII: a dump of vigilo's database contains none of the client's names,
+  emails or phone numbers, and `leads` has no column for them;
+- countable leads match lodgely's *Lodgely leads* KPI (October 12,
+  November 9, last 7 and 30 days; no duplicates, no incomplete leads);
+- a client name with umlauts (`Bäckerei Groß & Söhne` →
+  `backerei-gross-sohne`) works as a key;
+- an unknown key answers `404 Unknown client`: the lead source shows
+  *failing* with that message at once, a finding follows only after
+  `stale_hours` (see T-L7); a wrong token raises the critical *auth failed*
+  finding, which resolves on the next good fetch;
+- responses recorded in that run are in `tests/Fixtures/lodgely/recorded-page*.json`
+  (with lodgely's real same-second cursor), and the hand-written fixtures
+  use lodgely's cursor format.
 
-Then:
-- Record real, anonymised responses into `tests/Fixtures/lodgely/` and keep both contract test suites green.
-- Check that a lead deleted in lodgely disappears from vigilo.
-- Check that no PII column fills up.
-- Check a lead whose client is renamed in lodgely: the old key 404s and
-  *connection health* raises a finding (Q-2 a). lodgely has no UI to move a
-  lead to another client; LG-4 will keep old slugs as aliases and tombstone
-  moved leads (shared ROADMAP, follow-ups).
-- Compare lead counts: vigilo's countable leads for a client and month must
-  match lodgely's *Lodgely leads* KPI for the same range (shared V6). Mind
-  the day boundaries: lodgely counts by `created_at` in its `APP_TIMEZONE`
-  (default UTC), vigilo by `submitted_at` in the client's timezone, so leads
-  from the first and last hours of a month can land in different months.
-- Replace the hand-written fixtures' cursor (`{"u": ISO, "i": "ld_…"}`) with a
-  real one: lodgely's is `{"u": "Y-m-d H:i:s", "i": <int>}`, base64url
-  without padding. Opaque to vigilo, so nothing breaks; the fixtures just
-  should look like the real thing.
+Still open:
+1. The same with both stacks in Docker, and with the real ad accounts from
+   Q-7 / Q-8: *CPL spike* and *spend without leads* on real spend against
+   lodgely's leads.
+2. A client renamed in lodgely (no UI for it; the unknown-key case above
+   covers how vigilo reacts).
+3. Leads in the first and last hours of a month: lodgely counts by
+   `created_at` in its `APP_TIMEZONE` (default UTC), vigilo by
+   `submitted_at` in the client's timezone, so such leads can land in
+   different months. The run's data had none near a month boundary.
 
 ### T-L7 · A lodgely client without leads answers 404
 **Repo:** both · **Effort:** S · **Needs a decision (contract)**
@@ -159,6 +170,7 @@ All check thresholds are educated guesses (see `config/vigilo.php`). Review them
 - **SMTP delivery** of the digest with a real mail server (only log/array mailers were exercised).
 
 ### Known limitations / risks
+- **Lead times are lodgely's import times** until lodgely LG-3: `submitted_at` is when lodgely ingested the lead. A backlog imported into lodgely at once (e.g. a newly connected OpenFlow form) lands on the import day in vigilo's lead counts and cost per lead.
 - **Meta insights** are fetched synchronously (40 days × campaigns, `time_increment=1`). Very large accounts may need Meta's async report jobs.
 - **Landing pages** are probed sequentially (max 50 URLs per client, 10 s timeout each). A slow client run can take minutes; the job timeout is 900 s.
 - **Spend without leads** works on daily spend data, so its "last N hours" window is approximate (complete days plus today so far).

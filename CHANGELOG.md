@@ -22,6 +22,9 @@ user-facing change gets an entry under **Unreleased**.
 
 ### Changed
 
+- The lodgely contract tests also run against responses recorded from a
+  running lodgely, and OPEN-ITEMS → T-L4 records what the end-to-end run
+  verified and what still needs real ad accounts.
 - **Conversion drop skips the most recent day for Google** by default
   (`google_skip_recent_days`, default 1, per install and per client), because
   Google keeps attributing conversions to the click date for days and an
