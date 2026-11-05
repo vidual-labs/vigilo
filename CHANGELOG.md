@@ -48,6 +48,8 @@ user-facing change gets an entry under **Unreleased**.
   now only the next page load signed them out; filters and other Livewire
   requests on an open page kept returning data. The same applies to a user
   whose password was reset: they are sent to the profile page right away.
+- **The plain-text part of the digest and critical mails** no longer shows
+  HTML entities (`Brenner &amp; Partner`).
 
 ## [0.1.0] - 2026-10-20
 

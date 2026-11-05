@@ -101,3 +101,21 @@ it('resolves the open findings of a client that was deactivated', function () {
 
     expect(Finding::query()->active()->count())->toBe(0);
 });
+
+it('writes plain text into the text part of the mails, not HTML entities', function () {
+    $this->client->update(['name' => 'Kanzlei Brenner & Partner']);
+
+    app(RunManager::class)->start(RunTrigger::Manual, user: $this->operator);
+    app(RunManager::class)->start(RunTrigger::Schedule);
+
+    Mail::assertSent(CriticalFindingsMail::class, function (CriticalFindingsMail $mail) {
+        $mail->assertSeeInText('Kanzlei Brenner & Partner:', false)->assertDontSeeInText('&amp;', false);
+
+        return true;
+    });
+    Mail::assertSent(DailyDigestMail::class, function (DailyDigestMail $mail) {
+        $mail->assertSeeInText('Kanzlei Brenner & Partner:', false)->assertDontSeeInText('&amp;', false);
+
+        return true;
+    });
+});

@@ -1,6 +1,7 @@
-{{ trans_choice('New critical finding|New critical findings', $findings->count()) }}
+{{-- Plain text part: no HTML escaping (see digest-text). --}}
+{!! trans_choice('New critical finding|New critical findings', $findings->count()) !!}
 
 @foreach ($findings as $finding)
-[{{ $finding->severity->label() }}] {{ $finding->client?->name }}: {{ $finding->title() }}
-  {{ route('findings.show', $finding) }}
+[{!! $finding->severity->label() !!}] {!! $finding->client?->name !!}: {!! $finding->title() !!}
+  {!! route('findings.show', $finding) !!}
 @endforeach
