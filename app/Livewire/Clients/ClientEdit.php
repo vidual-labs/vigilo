@@ -10,12 +10,14 @@ use App\Domain\Leads\Services\LeadSync;
 use App\Domain\Runs\Enums\RunTrigger;
 use App\Domain\Runs\RunManager;
 use App\Enums\Platform;
+use App\Jobs\RunClientChecks;
 use App\Jobs\SyncLeadSourceNow;
 use App\Livewire\Concerns\ChecksOperator;
 use App\Livewire\Concerns\EditsCheckSettings;
 use App\Models\Client;
 use App\Models\MonitoredUrl;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -202,8 +204,9 @@ class ClientEdit extends Component
     {
         $this->authorizeOperator();
         if ($source = $this->client?->leadSource) {
-            SyncLeadSourceNow::dispatch($source->id);
-            session()->flash('status', __('Lead fetch queued.'));
+            // Like "Fetch now" on a connection: the findings follow the new data.
+            Bus::chain([new SyncLeadSourceNow($source->id), new RunClientChecks($source->client_id)])->dispatch();
+            session()->flash('status', __('Lead fetch queued. Checks for the client run right after.'));
         }
     }
 

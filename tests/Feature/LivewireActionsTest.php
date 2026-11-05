@@ -5,6 +5,8 @@ use App\Domain\AdPlatforms\Services\AdDataSync;
 use App\Domain\Checks\Snapshot\SnapshotFactory;
 use App\Domain\Findings\Enums\FindingEventType;
 use App\Domain\Findings\Enums\FindingStatus;
+use App\Jobs\RunClientChecks;
+use App\Jobs\SyncLeadSourceNow;
 use App\Livewire\Checks\CheckSettings;
 use App\Livewire\Clients\ClientEdit;
 use App\Livewire\Connections\ConnectionIndex;
@@ -18,6 +20,7 @@ use App\Models\Client;
 use App\Models\Finding;
 use App\Models\User;
 use App\Models\WebhookEndpoint;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
@@ -296,4 +299,17 @@ it('keeps a connection\'s data when only its name changes', function () {
         ->call('edit', $connection->id)->set('form.name', 'Brand campaigns')->call('save')->assertHasNoErrors();
 
     expect($connection->metrics()->count())->toBe($rows)->and($connection->fresh()->last_success_at)->not->toBeNull();
+});
+
+it('runs the client\'s checks right after a manual lead fetch', function () {
+    Bus::fake();
+    $client = Client::factory()->create();
+    $source = $client->leadSource()->create(['type' => 'lodgely', 'external_key' => 'huber-steuerberatung']);
+
+    Livewire::actingAs($this->operator())->test(ClientEdit::class, ['client' => $client])->call('fetchLeadSource');
+
+    Bus::assertChained([
+        fn (SyncLeadSourceNow $job) => $job->leadSourceId === $source->id,
+        fn (RunClientChecks $job) => $job->clientId === $client->id,
+    ]);
 });

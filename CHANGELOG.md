@@ -41,6 +41,9 @@ user-facing change gets an entry under **Unreleased**.
   lodgely LG-6, no `spam` flag). The ROADMAP gains a *Shared with vigilo*
   section mirrored in lodgely's ROADMAP, and OPEN-ITEMS records the decisions
   on Q-1 – Q-3.
+- ***Fetch now* on a client's lead source runs the client's checks right
+  after**, like *Fetch now* on a connection, so the findings reflect the
+  fetched leads without waiting for the next run.
 
 ### Fixed
 

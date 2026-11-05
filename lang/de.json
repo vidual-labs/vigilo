@@ -130,7 +130,7 @@
     "Last seen": "Zuletzt gesehen",
     "Last sign-in": "Letzte Anmeldung",
     "Last success": "Letzter Erfolg",
-    "Lead fetch queued.": "Lead-Abruf eingeplant.",
+    "Lead fetch queued. Checks for the client run right after.": "Lead-Abruf eingeplant. Die Prüfungen für den Kunden laufen direkt danach.",
     "Lead source": "Lead-Quelle",
     "Lead source (:type)": "Lead-Quelle (:type)",
     "Leads stored": "Gespeicherte Leads",
