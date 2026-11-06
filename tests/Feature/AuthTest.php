@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Finding;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 
@@ -67,4 +68,37 @@ it('switches the language for guests and users', function () {
 
 it('answers the health endpoint', function () {
     $this->get('/up')->assertOk();
+});
+
+/** Snapshot of the first Livewire component on a page, as the browser would send it back. */
+function livewireSnapshot(string $html): string
+{
+    preg_match('/wire:snapshot="([^"]+)"/', $html, $m);
+
+    return html_entity_decode($m[1] ?? '', ENT_QUOTES);
+}
+
+it('locks a deactivated user out of pages that are already open', function () {
+    $viewer = $this->viewer();
+    $finding = Finding::factory()->create();
+    $snapshot = livewireSnapshot($this->actingAs($viewer)->get('/findings')->assertOk()->getContent());
+
+    $viewer->forceFill(['is_active' => false])->save();
+
+    $response = $this->actingAs($viewer->fresh())->withHeader('X-Livewire', 'true')
+        ->postJson('/livewire/update', ['components' => [['snapshot' => $snapshot, 'updates' => ['status' => 'all'], 'calls' => []]]]);
+
+    $response->assertRedirect(route('login'));
+    expect($response->getContent())->not->toContain(route('findings.show', $finding));
+});
+
+it('keeps a forced password change in force on pages that are already open', function () {
+    $operator = $this->operator();
+    $snapshot = livewireSnapshot($this->actingAs($operator)->get('/findings')->assertOk()->getContent());
+
+    $operator->forceFill(['must_change_password' => true])->save();
+
+    $this->actingAs($operator->fresh())->withHeader('X-Livewire', 'true')
+        ->postJson('/livewire/update', ['components' => [['snapshot' => $snapshot, 'updates' => [], 'calls' => []]]])
+        ->assertRedirect(route('profile'));
 });

@@ -28,7 +28,9 @@ it('shows findings with translated titles', function () {
         ->assertSee('keine Conversions', false);
 
     $this->actingAs($this->operator(['locale' => 'en']))->get('/findings')
-        ->assertSee('no conversions yesterday', false);
+        // Alpenblick's Google account: the skipped day is named, not "yesterday".
+        ->assertSee('no conversions on', false)
+        ->assertDontSee('no conversions yesterday', false);
 });
 
 it('lets viewers read but hides operator-only pages', function () {
@@ -43,4 +45,13 @@ it('lets viewers read but hides operator-only pages', function () {
 
 it('shows the mock mode badge while simulating', function () {
     $this->actingAs($this->operator())->get('/findings')->assertSee('Mock mode');
+});
+
+it('shows inherited thresholds with the reader\'s decimal separator', function () {
+    $this->actingAs($this->operator(['locale' => 'de']))->get('/checks')
+        ->assertSee('placeholder="0,15"', false)
+        ->assertSee('placeholder="1, 3"', false);
+
+    $this->actingAs($this->operator(['locale' => 'en']))->get('/checks')
+        ->assertSee('placeholder="0.15"', false);
 });

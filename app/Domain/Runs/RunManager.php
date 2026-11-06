@@ -38,6 +38,7 @@ class RunManager
             // Demo clients only make sense against the simulators.
             ->when(! config('vigilo.mock_mode'), fn ($q) => $q->where('is_demo', false))
             ->orderBy('id')->get();
+        $run->forceFill(['stats' => ['clients' => $clients->count()]])->save();
         $runId = $run->id;
         $jobs = $clients->map(fn (Client $c) => array_values(array_filter([
             $fetch ? new SyncClientData($c->id) : null,
@@ -81,11 +82,14 @@ class RunManager
         }
 
         $since = $run->started_at;
+        // A single-client run reports on its client only, even when other
+        // runs are busy at the same time.
+        $own = fn ($query) => $query->when($run->client_id, fn ($q) => $q->where('client_id', $run->client_id));
         $stats = [
-            'clients' => $run->client_id ? 1 : Client::query()->active()->count(),
-            'opened' => Finding::query()->where('opened_at', '>=', $since)->count(),
-            'resolved' => Finding::query()->where('resolved_at', '>=', $since)->count(),
-            'fetch_failures' => FetchLog::query()->where('started_at', '>=', $since)->where('status', 'failed')->count(),
+            'clients' => $run->stats['clients'] ?? ($run->client_id ? 1 : Client::query()->active()->count()),
+            'opened' => $own(Finding::query())->where('opened_at', '>=', $since)->count(),
+            'resolved' => $own(Finding::query())->where('resolved_at', '>=', $since)->count(),
+            'fetch_failures' => $own(FetchLog::query())->where('started_at', '>=', $since)->where('status', 'failed')->count(),
             'failed_jobs' => $failedJobs,
         ];
 

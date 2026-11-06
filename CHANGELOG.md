@@ -22,6 +22,9 @@ user-facing change gets an entry under **Unreleased**.
 
 ### Changed
 
+- The lodgely contract tests also run against responses recorded from a
+  running lodgely, and OPEN-ITEMS → T-L4 records what the end-to-end run
+  verified and what still needs real ad accounts.
 - **Conversion drop skips the most recent day for Google** by default
   (`google_skip_recent_days`, default 1, per install and per client), because
   Google keeps attributing conversions to the click date for days and an
@@ -41,6 +44,57 @@ user-facing change gets an entry under **Unreleased**.
   lodgely LG-6, no `spam` flag). The ROADMAP gains a *Shared with vigilo*
   section mirrored in lodgely's ROADMAP, and OPEN-ITEMS records the decisions
   on Q-1 – Q-3.
+- ***Fetch now* on a client's lead source runs the client's checks right
+  after**, like *Fetch now* on a connection, so the findings reflect the
+  fetched leads without waiting for the next run.
+
+### Fixed
+
+- **A deactivated user is locked out of pages that are already open.** Until
+  now only the next page load signed them out; filters and other Livewire
+  requests on an open page kept returning data. The same applies to a user
+  whose password was reset: they are sent to the profile page right away.
+- **The plain-text part of the digest and critical mails** no longer shows
+  HTML entities (`Brenner &amp; Partner`).
+- **Changing a client's lodgely key no longer raises a false *spend without
+  leads* alarm.** The new feed started with the old feed's health, so its
+  empty lead list looked fresh until the first successful fetch. A changed
+  key or source now starts over completely (no cursor, no leads, no health
+  state, no findings of the old feed).
+- **Pointing a connection at another ad account or client starts it over.**
+  The old account's metrics, ads and last success stayed, so until the next
+  fetch the checks judged the old numbers as current (moved to another
+  client, a connection showed 0 % spend, "spending behind plan").
+- **Conversion drop no longer says "yesterday" for Google.** Google's
+  windows end a day earlier (`google_skip_recent_days`), so the title now
+  names the day it judged ("no conversions on 3 Nov 2026", "in the 3 days up
+  to 3 Nov 2026"). Meta findings keep "yesterday" / "the last N days".
+- **A landing page that fails to load once no longer resolves its other
+  findings.** A slow page that timed out, or a page whose probe did not run
+  (older than 48 hours), auto-resolved its *slow*, *redirects*, *off-site*,
+  *insecure* and certificate findings, which then reopened and alerted again
+  the next day. They now stay as they are until the page can be judged.
+- ***Spend without leads* is no longer resolved by a failed fetch.** When one
+  ad account could not be fetched and the others alone spent too little, the
+  open finding was resolved although the missing account may be the one
+  spending. It now stays open until vigilo can see all accounts again or a
+  lead arrives.
+- **Adding a user, or changing your email, with an address that already
+  exists in different capitals** (`Jana@…` for `jana@…`) shows "already
+  taken" instead of a server error.
+- **An invalid check threshold no longer saves half the form.** Client
+  settings and the *Checks* page stored everything before the bad field
+  (name, budgets, lead source, earlier checks) and then showed the error.
+  Now nothing is saved until every field is valid.
+- **Run statistics** (*Checks* → *Runs*, `vigilo:run`) of a single-client run
+  count only that client's new and resolved findings and fetch errors, and a
+  full run counts the clients it actually ran (demo clients are skipped
+  outside mock mode).
+- **Undoing an acknowledgement shows as "Reopened"** in a finding's history,
+  not as "Snooze ended".
+- **Check settings in German show inherited decimals with a comma** (`0,15`
+  instead of `0.15`), and the on/off selector of every check sits next to
+  its description instead of sometimes wrapping below it.
 
 ## [0.1.0] - 2026-10-20
 

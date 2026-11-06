@@ -4,6 +4,9 @@ return [
     'conversion_drop' => [
         'zero' => '{1} :account: no conversions yesterday despite :spend spend|[2,*] :account: no conversions in the last :days days despite :spend spend',
         'drop' => '{1} :account: conversions yesterday at :ratio of normal|[2,*] :account: conversions at :ratio of normal over the last :days days',
+        // Google, whose most recent day(s) are skipped: the window ends on :to.
+        'zero_lagged' => '{1} :account: no conversions on :to despite :spend spend|[2,*] :account: no conversions in the :days days up to :to despite :spend spend',
+        'drop_lagged' => '{1} :account: conversions on :to at :ratio of normal|[2,*] :account: conversions at :ratio of normal in the :days days up to :to',
     ],
     'spend_without_leads' => [
         'no_leads' => 'No new lead for :hours hours while :spend was spent',

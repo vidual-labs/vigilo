@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Domain\AdPlatforms\Http\ResilientHttp;
 use App\Domain\Checks\CheckRegistry;
+use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\EnsureUserIsActive;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
         // Reset links always point at APP_URL, never at the request's Host header.
         ResetPassword::createUrlUsing(fn (User $user, string $token) => rtrim((string) config('app.url'), '/')
             .'/reset-password/'.$token.'?email='.urlencode($user->email));
+
+        // Livewire's update endpoint only re-runs a page's auth middleware by
+        // default. Without these two, a deactivated user (or one whose
+        // password was reset) keeps reading data on a page that is still open.
+        Livewire::addPersistentMiddleware([EnsureUserIsActive::class, EnsurePasswordChanged::class]);
 
         $this->bootRateLimiters();
 

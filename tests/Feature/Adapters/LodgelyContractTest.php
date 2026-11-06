@@ -15,9 +15,11 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Sleep;
 
 /*
- * Contract tests for docs/LODGELY-CONTRACT.md v1, against fixtures. When
- * lodgely ships the API, record real responses into tests/Fixtures/lodgely
- * and these tests tell us whether both sides still agree.
+ * Contract tests for docs/LODGELY-CONTRACT.md v1, against fixtures:
+ * hand-written ones (page1/page2, covering what lodgely must never send)
+ * and responses recorded from a running lodgely (recorded-page*). Record
+ * new ones when the contract moves; these tests tell us whether both sides
+ * still agree.
  */
 beforeEach(function () {
     Sleep::fake();
@@ -51,6 +53,32 @@ it('follows the cursor, upserts status changes and applies deletions', function 
     Http::assertSent(fn (Request $r) => $r->hasHeader('Authorization', 'Bearer lodgely-read-only-token')
         && $r['client'] === 'alpenblick-solar' && isset($r['updated_since']) && ! isset($r['cursor']));
     Http::assertSent(fn (Request $r) => ($r['cursor'] ?? null) === fixture('lodgely/page1.json')['next_cursor']);
+});
+
+it('ingests a response recorded from lodgely', function () {
+    // Recorded on 2026-11-05 from lodgely 0.61 (demo data plus OpenFlow
+    // submissions; client northwind-studio, limit=20) in the end-to-end run:
+    // two pages, lodgely's real same-second cursor between them, and the
+    // tombstone of a lead deleted after an earlier sync stored it.
+    $this->source->update(['external_key' => 'northwind-studio']);
+    Lead::query()->create(['client_id' => $this->source->client_id, 'lead_source_id' => $this->source->id,
+        'external_id' => 'ld_79', 'submitted_at' => '2026-11-05 17:33:25', 'status' => LeadStatus::New,
+        'source_type' => 'openflow', 'flags' => []]);
+    expect(Lead::query()->where('external_id', 'ld_79')->exists())->toBeTrue();
+    Http::fake(['leads.agency.example/api/v1/lead-metadata*' => Http::sequence()
+        ->push(fixture('lodgely/recorded-page1.json'))
+        ->push(fixture('lodgely/recorded-page2.json'))]);
+
+    $result = app(LeadSync::class)->sync($this->source);
+
+    $leads = Lead::query()->get();
+    expect($result['ok'])->toBeTrue()
+        ->and($leads)->toHaveCount(24)
+        ->and($leads->filter->isCountable())->toHaveCount(21)
+        ->and($leads->pluck('external_id'))->not->toContain('ld_79')
+        ->and($this->source->fresh()->cursor)->toBe(fixture('lodgely/recorded-page2.json')['next_cursor']);
+    Http::assertSent(fn (Request $r) => $r['client'] === 'northwind-studio'
+        && ($r['cursor'] ?? null) === fixture('lodgely/recorded-page1.json')['next_cursor']);
 });
 
 it('never stores personal data, even when lodgely sends it', function () {

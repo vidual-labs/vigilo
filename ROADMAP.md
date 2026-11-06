@@ -98,7 +98,7 @@ ValueTrack ids (campaign, ad group, keyword criterion);
 open); `AdPlatforms\Contracts\ProvidesSearchTerms` is declared.
 
 ### VG-7 · Live lodgely lead feed
-**Status:** unblocked (lodgely 0.59.0 ships LG-15); needs the end-to-end test (T-L4) · **Effort:** S · **Depends on:** lodgely LG-15
+**Status:** unblocked (lodgely 0.59.0 ships LG-15); run against a live lodgely on 2026-11-05, fixtures recorded; the rest of the end-to-end test (Docker, real ad accounts) is T-L4 · **Effort:** S · **Depends on:** lodgely LG-15
 **Why:** everything in this phase needs real outcomes.
 **Acceptance criteria**
 - Setting `VIGILO_LODGELY_URL` and `VIGILO_LODGELY_API_TOKEN` against a

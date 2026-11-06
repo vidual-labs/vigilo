@@ -72,3 +72,40 @@ it('ignores healthy pages and probes that are no longer current', function () {
 
     expect($result->findings)->toBeEmpty();
 });
+
+it('keeps the other findings of a page it could not load', function () {
+    // A slow page that times out once: it is neither fast now nor confirmed down.
+    $url = 'https://termine.example.com/buchen';
+    $result = landing(SnapshotBuilder::at()->probe($url, ['status' => null, 'error' => 'cURL 28: timeout', 'failures' => 1, 'ms' => 10000]));
+    $hash = sha1($url);
+
+    expect($result->findings)->toBeEmpty()
+        ->and($result->keeps("landing_page:7:url:{$hash}:slow"))->toBeTrue()
+        ->and($result->keeps("landing_page:7:url:{$hash}:redirects"))->toBeTrue()
+        ->and($result->keeps('landing_page:7:tls:termine.example.com'))->toBeTrue();
+});
+
+it('keeps the other findings of a page that is down', function () {
+    $url = 'https://www.example.com/angebot';
+    $result = landing(SnapshotBuilder::at()->probe($url, ['status' => 503, 'failures' => 3]));
+
+    expect(findingsBySubject($result))->toHaveKey('url:'.sha1($url).':down')
+        ->and($result->keeps('landing_page:7:url:'.sha1($url).':slow'))->toBeTrue();
+});
+
+it('does not resolve anything for a page whose probe did not run', function () {
+    $url = 'https://www.example.com/rechner';
+    $result = landing(SnapshotBuilder::at()->probe($url, ['ms' => 4200, 'tls_days' => 5, 'checked_hours_ago' => 72]));
+
+    expect($result->findings)->toBeEmpty()
+        ->and($result->keeps('landing_page:7:url:'.sha1($url).':slow'))->toBeTrue()
+        ->and($result->keeps('landing_page:7:tls:www.example.com'))->toBeTrue();
+});
+
+it('judges a host certificate from any page that loaded', function () {
+    $result = landing(SnapshotBuilder::at()
+        ->probe('https://www.example.com/a', ['status' => null, 'error' => 'cURL 28: timeout', 'failures' => 1])
+        ->probe('https://www.example.com/b', ['tls_days' => 80]));
+
+    expect($result->keeps('landing_page:7:tls:www.example.com'))->toBeFalse();
+});

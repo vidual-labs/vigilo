@@ -1,6 +1,12 @@
 <?php
 
+use App\Domain\AdPlatforms\Enums\ConnectionStatus;
+use App\Domain\AdPlatforms\Services\AdDataSync;
+use App\Domain\Checks\Snapshot\SnapshotFactory;
+use App\Domain\Findings\Enums\FindingEventType;
 use App\Domain\Findings\Enums\FindingStatus;
+use App\Jobs\RunClientChecks;
+use App\Jobs\SyncLeadSourceNow;
 use App\Livewire\Checks\CheckSettings;
 use App\Livewire\Clients\ClientEdit;
 use App\Livewire\Connections\ConnectionIndex;
@@ -14,6 +20,7 @@ use App\Models\Client;
 use App\Models\Finding;
 use App\Models\User;
 use App\Models\WebhookEndpoint;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
@@ -162,4 +169,147 @@ it('changes the password and clears the forced change', function () {
         ->assertRedirect(route('findings.index'));
 
     expect($user->fresh()->must_change_password)->toBeFalse();
+});
+
+it('starts the lead source over when its feed changes', function () {
+    $operator = $this->operator();
+    $client = Client::factory()->create();
+    $old = $client->leadSource()->create([
+        'type' => 'lodgely', 'external_key' => 'brenner-alt', 'cursor' => 'eyJ1IjoiMjAyNi0xMS0wNSJ9',
+        'status' => ConnectionStatus::Ok, 'last_success_at' => now(), 'last_attempt_at' => now(),
+    ]);
+    $old->leads()->create(['client_id' => $client->id, 'external_id' => 'ld_1', 'submitted_at' => now()->subHour(), 'status' => 'new']);
+    $old->forceFill(['created_at' => now()->subMonths(3)])->save();
+
+    // Same feed: nothing is reset.
+    Livewire::actingAs($operator)->test(ClientEdit::class, ['client' => $client])->call('save')->assertHasNoErrors();
+    expect($client->fresh()->leadSource->cursor)->toBe('eyJ1IjoiMjAyNi0xMS0wNSJ9');
+
+    Livewire::actingAs($operator)->test(ClientEdit::class, ['client' => $client])
+        ->set('leadKey', 'kanzlei-brenner-partner')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $source = $client->fresh()->leadSource;
+    expect($source->external_key)->toBe('kanzlei-brenner-partner')
+        ->and($source->cursor)->toBeNull()
+        ->and($source->leads()->count())->toBe(0)
+        // The old feed's health must not make the new, unfetched one look fresh
+        // (spend without leads would fire on the empty lead list) or old.
+        ->and($source->status)->toBe(ConnectionStatus::Unknown)
+        ->and($source->last_success_at)->toBeNull()
+        ->and($source->created_at->greaterThan(now()->subMinute()))->toBeTrue();
+
+    $snapshot = app(SnapshotFactory::class)->build($client->fresh());
+    expect($snapshot->isFresh($snapshot->leadSource))->toBeFalse();
+});
+
+it('treats email addresses case-insensitively when checking for duplicates', function () {
+    $operator = $this->operator(['email' => 'ops@agency.example']);
+    $this->viewer(['email' => 'jana@agency.example']);
+
+    Livewire::actingAs($operator)->test(UserIndex::class)
+        ->set('name', 'Jana again')->set('email', 'Jana@Agency.example')->set('role', 'viewer')
+        ->call('create')
+        ->assertHasErrors('email');
+
+    Livewire::actingAs($operator)->test(Profile::class)
+        ->set('email', 'JANA@agency.example')
+        ->call('save')
+        ->assertHasErrors('email');
+
+    Livewire::actingAs($operator)->test(Profile::class)
+        ->set('email', 'OPS@agency.example')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(User::query()->count())->toBe(2)->and($operator->fresh()->email)->toBe('ops@agency.example');
+});
+
+it('saves nothing when one check threshold is invalid', function () {
+    $operator = $this->operator();
+    $client = Client::factory()->create(['name' => 'Huber Steuerberatung']);
+
+    Livewire::actingAs($operator)->test(ClientEdit::class, ['client' => $client])
+        ->set('name', 'Huber Steuerberatung GmbH')
+        ->set('checkForm.connection_health.values.stale_hours', '30')
+        ->set('checkForm.budget_pacing.values.min_day_of_month', 'soon')
+        ->call('save')
+        ->assertHasErrors('checkForm.budget_pacing.values.min_day_of_month');
+
+    Livewire::actingAs($operator)->test(CheckSettings::class)
+        ->set('checkForm.connection_health.values.stale_hours', '30')
+        ->set('checkForm.landing_page.values.slow_ms', 'fast')
+        ->call('save')
+        ->assertHasErrors('checkForm.landing_page.values.slow_ms');
+
+    expect($client->fresh()->name)->toBe('Huber Steuerberatung')
+        ->and(CheckSetting::query()->count())->toBe(0);
+});
+
+it('records a manual reopen as such, not as the end of a snooze', function () {
+    $operator = $this->operator();
+    $finding = Finding::factory()->create();
+
+    Livewire::actingAs($operator)->test(Inbox::class)
+        ->call('acknowledge', $finding->id)
+        ->call('reopen', $finding->id);
+
+    $event = $finding->events()->first();
+    expect($finding->fresh()->status)->toBe(FindingStatus::Open)
+        ->and($event->type)->toBe(FindingEventType::ReopenedManually)
+        ->and($event->data)->toBe(['from' => 'acknowledged'])
+        ->and($event->user_id)->toBe($operator->id)
+        ->and($event->type->label())->toBe('Reopened');
+});
+
+it('forgets the old account\'s data when a connection points somewhere else', function (array $change) {
+    $operator = $this->operator();
+    $client = Client::factory()->create();
+    $connection = AdConnection::factory()->for($client)->create(['account_id' => '1234567890']);
+    app(AdDataSync::class)->sync($connection);
+    expect($connection->metrics()->count())->toBeGreaterThan(0)->and($connection->fresh()->last_success_at)->not->toBeNull();
+
+    $component = Livewire::actingAs($operator)->test(ConnectionIndex::class)->call('edit', $connection->id);
+    foreach ($change as $field => $value) {
+        $component->set('form.'.$field, $value);
+    }
+    $component->call('save')->assertHasNoErrors();
+
+    // Until the next fetch nothing about the new account is known: the old
+    // account's numbers must not count, nor make the connection look fresh.
+    $connection->refresh();
+    expect($connection->metrics()->count())->toBe(0)
+        ->and($connection->ads()->count())->toBe(0)
+        ->and($connection->last_success_at)->toBeNull()
+        ->and($connection->status)->toBe(ConnectionStatus::Unknown)
+        ->and($connection->setting('account_name'))->toBeNull()
+        ->and($connection->mockScenario())->toBe('healthy');
+})->with([
+    'another account' => [fn () => ['account_id' => '999-888-7777']],
+    'another client' => [fn () => ['client_id' => (string) Client::factory()->create()->id]],
+]);
+
+it('keeps a connection\'s data when only its name changes', function () {
+    $connection = AdConnection::factory()->create();
+    app(AdDataSync::class)->sync($connection);
+    $rows = $connection->metrics()->count();
+
+    Livewire::actingAs($this->operator())->test(ConnectionIndex::class)
+        ->call('edit', $connection->id)->set('form.name', 'Brand campaigns')->call('save')->assertHasNoErrors();
+
+    expect($connection->metrics()->count())->toBe($rows)->and($connection->fresh()->last_success_at)->not->toBeNull();
+});
+
+it('runs the client\'s checks right after a manual lead fetch', function () {
+    Bus::fake();
+    $client = Client::factory()->create();
+    $source = $client->leadSource()->create(['type' => 'lodgely', 'external_key' => 'huber-steuerberatung']);
+
+    Livewire::actingAs($this->operator())->test(ClientEdit::class, ['client' => $client])->call('fetchLeadSource');
+
+    Bus::assertChained([
+        fn (SyncLeadSourceNow $job) => $job->leadSourceId === $source->id,
+        fn (RunClientChecks $job) => $job->clientId === $client->id,
+    ]);
 });

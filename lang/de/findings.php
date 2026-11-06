@@ -4,6 +4,8 @@ return [
     'conversion_drop' => [
         'zero' => '{1} :account: gestern keine Conversions trotz :spend Ausgaben|[2,*] :account: keine Conversions in den letzten :days Tagen trotz :spend Ausgaben',
         'drop' => '{1} :account: gestern nur :ratio der üblichen Conversions|[2,*] :account: nur :ratio der üblichen Conversions in den letzten :days Tagen',
+        'zero_lagged' => '{1} :account: am :to keine Conversions trotz :spend Ausgaben|[2,*] :account: keine Conversions in den :days Tagen bis :to trotz :spend Ausgaben',
+        'drop_lagged' => '{1} :account: am :to nur :ratio der üblichen Conversions|[2,*] :account: nur :ratio der üblichen Conversions in den :days Tagen bis :to',
     ],
     'spend_without_leads' => [
         'no_leads' => 'Seit :hours Stunden kein neuer Lead, obwohl :spend ausgegeben wurden',

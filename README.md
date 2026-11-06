@@ -63,7 +63,7 @@ client does. One install serves the whole agency.
 
 | Check | What it catches | Default |
 |---|---|---|
-| **Conversion drop** | Conversions over the last 1 or 3 complete days are zero, or below 50 % of the trailing 14-day baseline, while the account keeps spending. Google + Meta. For Google the most recent day is skipped (conversions arrive late; `google_skip_recent_days`, default 1). | critical at zero, warning below 50 %; needs ≥ €50 spend in the window and ≥ 5 baseline conversions |
+| **Conversion drop** | Conversions over the last 1 or 3 complete days are zero, or below 50 % of the trailing 14-day baseline, while the account keeps spending. Google + Meta. For Google the most recent day is skipped (conversions arrive late; `google_skip_recent_days`, default 1), and the finding names the day it judged. | critical at zero, warning below 50 %; needs ≥ €50 spend in the window and ≥ 5 baseline conversions |
 | **Spend without leads** | Ads keep spending but the lead source has received no new lead for N hours — a broken form, webhook or sync. | 48 h, ≥ €30 spend, critical |
 | **Connection health** | Failed authentication, no successful fetch for too long, Meta token expiring within 14 days, disabled/unsettled ad account. Covers the lead source too. | warning after 26 h, critical after 72 h; token warning 14 d, critical 3 d |
 | **Budget pacing** | Month-to-date spend vs. the pro-rata monthly budget per platform. | warning outside ±15 %, critical when already over budget or projected > 125 %; from day 3 |
@@ -323,6 +323,8 @@ To connect a lodgely 0.59.0+ install:
 3. Set each client's lead source to *lodgely* with its client key: the slug
    of the lodgely client name (`Kanzlei Brenner & Partner` →
    `kanzlei-brenner-partner`). *Test* calls the feed with `limit=1`.
+   Changing a client's key (or its source) starts the feed over: the stored
+   leads go, and the next fetch reads the last 60 days again.
 
 In mock mode the feed is simulated. The *spend without leads* check and
 lead-based CPL need a lead source; all other checks work without one.

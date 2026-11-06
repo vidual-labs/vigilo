@@ -4,6 +4,8 @@ use App\Domain\Checks\CheckResult;
 use App\Domain\Checks\Checks\ConversionDropCheck;
 use App\Domain\Findings\Enums\Severity;
 use App\Enums\Platform;
+use App\Models\Finding;
+use App\Support\Format;
 use Tests\Support\SnapshotBuilder;
 
 function conversionDrop(SnapshotBuilder $builder, array $overrides = []): CheckResult
@@ -17,7 +19,7 @@ it('raises a critical finding when tracking stops while spend continues', functi
     expect($result->findings)->toHaveCount(1);
     $finding = $result->findings[0];
     expect($finding->severity)->toBe(Severity::Critical)
-        ->and($finding->titleKey)->toBe('findings.conversion_drop.zero')
+        ->and($finding->titleKey)->toBe('findings.conversion_drop.zero_lagged')
         ->and($finding->dedupeKey)->toBe('conversion_drop:7:conn:1')
         ->and($finding->platform)->toBe(Platform::Google)
         ->and($finding->titleParams['days'])->toBe(1)
@@ -104,4 +106,25 @@ it('does not skip days for Meta', function () {
     $builder = SnapshotBuilder::at()->connection(1, Platform::Meta)->series(1, 40, 2, 150, 4)->series(1, 1, 1, 150, 0);
 
     expect(conversionDrop($builder)->findings)->toHaveCount(1);
+});
+
+it('names the day it judged when Google\'s most recent day is skipped', function () {
+    // Today is 2026-10-20: the 1-day window for Google is the 18th, not "yesterday".
+    $builder = SnapshotBuilder::at()->connection(1)->series(1, 40, 3, 150, 4)->series(1, 2, 1, 150, 0);
+    $draft = conversionDrop($builder)->findings[0];
+    $title = fn (string $locale) => (new Finding(['title_key' => $draft->titleKey, 'title_params' => $draft->titleParams]))->title($locale);
+
+    expect($draft->titleKey)->toBe('findings.conversion_drop.zero_lagged')
+        ->and($draft->titleParams['to'])->toBe(Format::d('2026-10-18'))
+        ->and($title('en'))->toContain('no conversions on 18 Oct 2026')->not->toContain('yesterday')
+        ->and($title('de'))->toContain('am 18. Okt 2026 keine Conversions')->not->toContain('gestern');
+});
+
+it('says "yesterday" when no day is skipped', function () {
+    $builder = SnapshotBuilder::at()->connection(1, Platform::Meta)->series(1, 40, 2, 150, 4)->series(1, 1, 1, 150, 0);
+    $draft = conversionDrop($builder)->findings[0];
+
+    expect($draft->titleKey)->toBe('findings.conversion_drop.zero')
+        ->and((new Finding(['title_key' => $draft->titleKey, 'title_params' => $draft->titleParams]))->title('en'))
+        ->toContain('no conversions yesterday');
 });

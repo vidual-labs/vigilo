@@ -63,7 +63,8 @@ class FindingActions
         if (! in_array($finding->status, [FindingStatus::Acknowledged, FindingStatus::Snoozed], true)) {
             return;
         }
+        $from = $finding->status->value;
         $finding->forceFill(['status' => FindingStatus::Open, 'snoozed_until' => null, 'acknowledged_at' => null, 'acknowledged_by' => null])->save();
-        $this->reconciler->event($finding, FindingEventType::Unsnoozed, userId: $user->id);
+        $this->reconciler->event($finding, FindingEventType::ReopenedManually, data: ['from' => $from], userId: $user->id);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Connections;
 
+use App\Domain\AdPlatforms\Enums\ConnectionStatus;
 use App\Domain\AdPlatforms\Mock\MockScenarios;
 use App\Domain\AdPlatforms\Services\AdDataSync;
 use App\Enums\Platform;
@@ -20,6 +21,9 @@ use Livewire\Component;
 class ConnectionIndex extends Component
 {
     use ChecksOperator;
+
+    /** What a fetch learns about the account (AccountInfo::toSettings()). */
+    private const ACCOUNT_SETTINGS = ['account_name', 'account_currency', 'account_timezone', 'account_active', 'account_status'];
 
     #[Url(except: '')]
     public string $client = '';
@@ -105,6 +109,26 @@ class ConnectionIndex extends Component
             $this->addError('form.account_id', __('This account is already connected to the client.'));
 
             return;
+        }
+
+        if ($connection->exists && ($connection->account_id !== $accountId || $connection->client_id !== (int) $this->form['client_id'])) {
+            // Another account or client: none of the stored numbers, ads or
+            // health apply any more. A last success from the old account
+            // would make the empty new one look fresh (e.g. "spending
+            // behind plan" at 0 %) until the next fetch.
+            $connection->metrics()->delete();
+            $connection->ads()->delete();
+            $connection->forceFill([
+                'status' => ConnectionStatus::Unknown,
+                'last_attempt_at' => null,
+                'last_success_at' => null,
+                'last_error' => null,
+                'last_error_code' => null,
+                'consecutive_failures' => 0,
+                'token_expires_at' => null,
+                'token_checked_at' => null,
+                'settings' => array_diff_key($connection->settings ?? [], array_flip(self::ACCOUNT_SETTINGS)),
+            ]);
         }
 
         $connection->fill([

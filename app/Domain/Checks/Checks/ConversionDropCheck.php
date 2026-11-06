@@ -20,7 +20,8 @@ use App\Support\Format;
  * Google attributes conversions to the click date and keeps adding them for
  * days, so at the morning run "yesterday" is usually incomplete. For Google
  * the windows and the baseline therefore end `google_skip_recent_days`
- * earlier (default 1): a 1-day window is the day before yesterday.
+ * earlier (default 1): a 1-day window is the day before yesterday, and the
+ * title names that day instead of saying "yesterday".
  */
 class ConversionDropCheck extends BaseCheck
 {
@@ -100,10 +101,13 @@ class ConversionDropCheck extends BaseCheck
                 $snapshot,
                 $subject,
                 $worst['severity'],
-                $worst['conversions'] <= 0 ? 'zero' : 'drop',
+                // With skipped days the window does not end yesterday: the
+                // "_lagged" titles name its last day instead.
+                $worst['conversions'] <= 0 ? ($skip > 0 ? 'zero_lagged' : 'zero') : ($skip > 0 ? 'drop_lagged' : 'drop'),
                 [
                     'account' => $connection->name,
                     'days' => $worst['window'],
+                    'to' => Format::d($worst['to']),
                     'spend' => $this->money($snapshot, $worst['spend']),
                     'ratio' => Format::p($worst['ratio']),
                 ],

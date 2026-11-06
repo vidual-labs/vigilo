@@ -11,6 +11,8 @@ enum FindingEventType: string
     case Acknowledged = 'acknowledged';
     case Snoozed = 'snoozed';
     case Unsnoozed = 'unsnoozed';
+    /** Someone undid an acknowledgement or a snooze. */
+    case ReopenedManually = 'reopened_manual';
     case Resolved = 'resolved';
     case Notified = 'notified';
 
@@ -24,6 +26,7 @@ enum FindingEventType: string
             self::Acknowledged => __('Acknowledged'),
             self::Snoozed => __('Snoozed'),
             self::Unsnoozed => __('Snooze ended'),
+            self::ReopenedManually => __('Reopened'),
             self::Resolved => __('Resolved'),
             self::Notified => __('Notification sent'),
         };

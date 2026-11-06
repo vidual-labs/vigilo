@@ -9,6 +9,7 @@ use App\Mail\DailyDigestMail;
 use App\Models\AdConnection;
 use App\Models\Client;
 use App\Models\Finding;
+use App\Models\Run;
 use App\Models\WebhookEndpoint;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -100,4 +101,42 @@ it('resolves the open findings of a client that was deactivated', function () {
     app(RunManager::class)->start(RunTrigger::Manual);
 
     expect(Finding::query()->active()->count())->toBe(0);
+});
+
+it('writes plain text into the text part of the mails, not HTML entities', function () {
+    $this->client->update(['name' => 'Kanzlei Brenner & Partner']);
+
+    app(RunManager::class)->start(RunTrigger::Manual, user: $this->operator);
+    app(RunManager::class)->start(RunTrigger::Schedule);
+
+    Mail::assertSent(CriticalFindingsMail::class, function (CriticalFindingsMail $mail) {
+        $mail->assertSeeInText('Kanzlei Brenner & Partner:', false)->assertDontSeeInText('&amp;', false);
+
+        return true;
+    });
+    Mail::assertSent(DailyDigestMail::class, function (DailyDigestMail $mail) {
+        $mail->assertSeeInText('Kanzlei Brenner & Partner:', false)->assertDontSeeInText('&amp;', false);
+
+        return true;
+    });
+});
+
+it('counts only its own client in the stats of a single-client run', function () {
+    $other = Client::factory()->create();
+    AdConnection::factory()->for($other)->scenario('tracking_broken')->create();
+    Client::factory()->create(['is_demo' => true]);
+    config(['vigilo.mock_mode' => false]);
+
+    $run = app(RunManager::class)->start(RunTrigger::Manual, $this->client, fetch: false);
+    expect($run->stats)->toMatchArray(['clients' => 1, 'opened' => 0]);
+
+    // A full run outside mock mode skips the demo client, and says so.
+    $run = app(RunManager::class)->start(RunTrigger::Manual, fetch: false);
+    expect($run->stats['clients'])->toBe(2);
+
+    // Another client's finding opening during a single-client run is not this run's news.
+    $run = Run::query()->create(['trigger' => RunTrigger::Manual, 'client_id' => $this->client->id, 'status' => RunStatus::Running, 'started_at' => now()->subMinute()]);
+    Finding::factory()->for($other)->create(['opened_at' => now()]);
+    app(RunManager::class)->finish($run->id, 0);
+    expect($run->fresh()->stats['opened'])->toBe(0);
 });

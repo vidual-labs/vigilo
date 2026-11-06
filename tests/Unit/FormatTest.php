@@ -14,5 +14,7 @@ it('renders typed params', function () {
         ->and(Format::param(Format::x(2.04), 'en'))->toBe('2.0×')
         ->and(Format::param(['type' => 'platform', 'value' => 'meta']))->toBe('Meta Ads')
         ->and(Format::param('plain'))->toBe('plain')
-        ->and(Format::param(Format::t('no response'), 'de'))->toBe('keine Antwort');
+        ->and(Format::param(Format::t('no response'), 'de'))->toBe('keine Antwort')
+        ->and(Format::param(Format::d('2026-11-03'), 'en'))->toBe('3 Nov 2026')
+        ->and(Format::param(Format::d('2026-11-03'), 'de'))->toBe('3. Nov 2026');
 });

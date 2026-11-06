@@ -10,12 +10,14 @@ use App\Domain\Leads\Services\LeadSync;
 use App\Domain\Runs\Enums\RunTrigger;
 use App\Domain\Runs\RunManager;
 use App\Enums\Platform;
+use App\Jobs\RunClientChecks;
 use App\Jobs\SyncLeadSourceNow;
 use App\Livewire\Concerns\ChecksOperator;
 use App\Livewire\Concerns\EditsCheckSettings;
 use App\Models\Client;
 use App\Models\MonitoredUrl;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -99,6 +101,8 @@ class ClientEdit extends Component
             'leadKey' => ['nullable', 'required_if:leadType,lodgely', 'string', 'max:191', 'regex:/^[A-Za-z0-9_\-.:]+$/'],
             'leadScenario' => ['nullable', Rule::in(MockScenarios::LEAD_SCENARIOS)],
         ]);
+        // Thresholds are validated before anything is stored, too.
+        $checks = $this->validatedCheckForm();
 
         $attributes = [
             'name' => $data['name'],
@@ -124,7 +128,7 @@ class ClientEdit extends Component
         }
 
         $this->saveLeadSource();
-        $this->saveCheckForm($this->client);
+        $this->saveCheckForm($this->client, $checks);
 
         session()->flash('status', __('Client saved.'));
         $this->redirectRoute('clients.edit', $this->client, navigate: true);
@@ -146,9 +150,12 @@ class ClientEdit extends Component
             'settings' => array_merge($source->settings ?? [], ['mock_scenario' => $this->leadScenario ?: 'healthy']),
         ];
         if ($source && ($source->type->value !== $this->leadType || $source->external_key !== $attributes['external_key'])) {
-            // Different feed: start over, and drop leads from the old one.
+            // Different feed: start over with a new source — no cursor, no
+            // leads and none of the old feed's health. Its last success would
+            // make the new, still unfetched feed look fresh (and silent), and
+            // its findings belong to the old feed.
             $source->leads()->delete();
-            $attributes['cursor'] = null;
+            $source->delete();
         }
         $this->client?->leadSource()->updateOrCreate([], $attributes);
     }
@@ -197,8 +204,9 @@ class ClientEdit extends Component
     {
         $this->authorizeOperator();
         if ($source = $this->client?->leadSource) {
-            SyncLeadSourceNow::dispatch($source->id);
-            session()->flash('status', __('Lead fetch queued.'));
+            // Like "Fetch now" on a connection: the findings follow the new data.
+            Bus::chain([new SyncLeadSourceNow($source->id), new RunClientChecks($source->client_id)])->dispatch();
+            session()->flash('status', __('Lead fetch queued. Checks for the client run right after.'));
         }
     }
 

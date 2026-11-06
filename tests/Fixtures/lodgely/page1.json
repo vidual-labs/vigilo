@@ -16,6 +16,6 @@
       "full_name": "Should Never Be Stored", "email": "never@example.com", "phone": "+49 30 000000", "message": "free text must be dropped"
     }
   ],
-  "next_cursor": "eyJ1IjoiMjAyNi0xMC0xOVQxMTowMDowMFoiLCJpIjoibGRfMDFKOVo3QjJNMSJ9",
+  "next_cursor": "eyJ1IjoiMjAyNi0xMC0xOSAxMTowMDowMCIsImkiOjJ9",
   "has_more": true
 }

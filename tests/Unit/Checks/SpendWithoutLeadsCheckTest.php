@@ -3,6 +3,7 @@
 use App\Domain\Checks\CheckResult;
 use App\Domain\Checks\Checks\SpendWithoutLeadsCheck;
 use App\Domain\Findings\Enums\Severity;
+use App\Enums\Platform;
 use Tests\Support\SnapshotBuilder;
 
 function spendWithoutLeads(SnapshotBuilder $builder, array $overrides = []): CheckResult
@@ -71,4 +72,29 @@ it('keeps the finding when the lead source could not be fetched today', function
 
     expect($result->findings)->toBeEmpty()
         ->and($result->keeps('spend_without_leads:7:client'))->toBeTrue();
+});
+
+it('keeps the finding when the fresh accounts alone spend too little to judge', function () {
+    // Meta (the big spender) could not be fetched; Google alone is below min_spend.
+    $builder = SnapshotBuilder::at()
+        ->connection(1)->series(1, 10, 0, 5, 0)
+        ->connection(2, Platform::Meta, ['last_success_hours_ago' => 30])->series(2, 10, 1, 120, 3)
+        ->leadSource()->leadsDaily(10, 3, 3);
+
+    $result = spendWithoutLeads($builder);
+
+    expect($result->findings)->toBeEmpty()
+        ->and($result->keeps('spend_without_leads:7:client'))->toBeTrue();
+});
+
+it('resolves once leads arrive, even when an account could not be fetched', function () {
+    $builder = SnapshotBuilder::at()
+        ->connection(1)->series(1, 10, 0, 5, 0)
+        ->connection(2, Platform::Meta, ['last_success_hours_ago' => 30])->series(2, 10, 1, 120, 3)
+        ->leadSource()->leadsDaily(10, 0, 2);
+
+    $result = spendWithoutLeads($builder);
+
+    expect($result->findings)->toBeEmpty()
+        ->and($result->keeps('spend_without_leads:7:client'))->toBeFalse();
 });
