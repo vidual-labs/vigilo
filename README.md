@@ -186,8 +186,10 @@ container, not the host: use `host.docker.internal:8090` (add
 `extra_hosts: ["host.docker.internal:host-gateway"]` to the proxy's service)
 and keep `VIGILO_HTTP_PORT=8090` without `127.0.0.1`.
 
-Links and cookies follow `APP_URL` and `SESSION_SECURE_COOKIE`, so vigilo
-generates https links even though it receives plain HTTP from the proxy.
+vigilo's Caddy keeps the proxy's `X-Forwarded-Proto: https` when the request
+comes from a private address, which covers a proxy on the same host. If your
+proxy reaches vigilo from a public address (another server), add that address
+to `VIGILO_TRUSTED_PROXIES` and `TRUSTED_PROXIES`.
 
 ### 3. Start it
 
@@ -314,6 +316,7 @@ All settings come from `.env` (fully commented in
 |---|---|---|
 | `VIGILO_HTTP_PORT` / `VIGILO_HTTPS_PORT` | `8090` / `8453` | Host ports mapped to Caddy. |
 | `VIGILO_SITE_ADDRESS` | `:80` | Caddy site address. A domain (e.g. `vigilo.agency.example`) enables automatic Let's Encrypt; map ports 80/443 for that. |
+| `VIGILO_TRUSTED_PROXIES` | `private_ranges` | Addresses (space-separated CIDRs, or `private_ranges`) whose `X-Forwarded-*` headers Caddy keeps. Needed so vigilo sees https behind another reverse proxy. |
 | `VIGILO_IMAGE_TAG` | `local` | Tag of the locally built images. |
 | `PHP_FPM_MAX_CHILDREN` | `4` | PHP-FPM workers (each ~30–40 MB while busy). |
 

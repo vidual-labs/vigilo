@@ -4,6 +4,17 @@
 # VIGILO_HTTP_PORT). Set it to a domain (vigilo.agency.example) and map
 # ports 80/443 to get automatic Let's Encrypt certificates.
 
+# Behind another reverse proxy (Cloudflare, lodgely's Caddy, nginx …), keep
+# its X-Forwarded-Proto/-For only when the request comes from a trusted
+# address; otherwise Caddy replaces them and vigilo thinks every request is
+# plain http. Default: private ranges, which covers a proxy on the same host
+# (Docker forwards published ports from the bridge gateway).
+{
+	servers {
+		trusted_proxies static {$VIGILO_TRUSTED_PROXIES:private_ranges}
+	}
+}
+
 {$VIGILO_SITE_ADDRESS::80} {
 	root * /app/public
 	encode zstd gzip

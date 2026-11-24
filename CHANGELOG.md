@@ -57,6 +57,12 @@ user-facing change gets an entry under **Unreleased**.
 
 ### Fixed
 
+- **https behind another reverse proxy.** vigilo's Caddy dropped the outer
+  proxy's `X-Forwarded-Proto`, so vigilo treated every request as plain http
+  and, for example, sent the browser back to an `http://` URL after a failed
+  sign-in. Caddy now trusts forwarded headers from private addresses
+  (`VIGILO_TRUSTED_PROXIES`, default `private_ranges`). Rebuild with
+  `docker compose up -d --build`.
 - **A deactivated user is locked out of pages that are already open.** Until
   now only the next page load signed them out; filters and other Livewire
   requests on an open page kept returning data. The same applies to a user
