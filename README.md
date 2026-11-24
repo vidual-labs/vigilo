@@ -130,8 +130,14 @@ install:
 | `SESSION_SECURE_COOKIE` | `true` |
 | `DB_PASSWORD` | a random value, e.g. from `openssl rand -hex 24` |
 | `ADMIN_EMAIL` | your email |
-| `ADMIN_PASSWORD` | empty = generated and printed once; otherwise ≥ 12 characters (vigilo refuses to start with a weak or default password) |
+| `ADMIN_PASSWORD` | empty = generated and printed once; otherwise ≥ 12 characters (vigilo refuses to start with a weak or default password). Wrap it in single quotes (`'…'`) if it contains `$` or `#` |
 | `MAIL_*` | your SMTP server, otherwise digests only go to the log |
+
+> **Passwords with `$`:** Docker Compose treats `$name` in `.env` as a
+> variable and silently drops it (you will see `The "…" variable is not set`).
+> Use single quotes around such values, e.g. `ADMIN_PASSWORD='Pa$s…'`.
+> `ADMIN_*` is only read when no operator exists yet; changing it later has
+> no effect, so get it right before the first start.
 
 Then pick the case that matches your server. Only one program can listen on
 ports 80/443, so vigilo either takes them itself or sits behind the reverse
