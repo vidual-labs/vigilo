@@ -22,3 +22,11 @@ window.vigiloTheme = {
         document.documentElement.classList.toggle('dark', dark);
     },
 };
+
+// wire:navigate copies the new page's <html> attributes over the current ones,
+// which drops the `dark` class (the server never renders it). Re-apply the
+// theme right after the swap, before the browser paints the new page.
+document.addEventListener('livewire:navigating', (event) => {
+    event.detail.onSwap(() => window.vigiloTheme.apply(window.vigiloTheme.get()));
+});
+document.addEventListener('livewire:navigated', () => window.vigiloTheme.apply(window.vigiloTheme.get()));
