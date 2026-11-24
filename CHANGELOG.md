@@ -22,6 +22,13 @@ user-facing change gets an entry under **Unreleased**.
 
 ### Changed
 
+- **Default host ports are now 8090 (HTTP) and 8453 (HTTPS)** instead of
+  8080/8443, so vigilo can run next to lodgely on one server. Existing
+  installs keep their port: `.env` sets `VIGILO_HTTP_PORT` and
+  `VIGILO_HTTPS_PORT` explicitly. To move, change both and `APP_URL`, then
+  run `docker compose up -d`.
+- The README's Quick start is now a complete VPS guide, for a server of
+  vigilo's own and for a shared server behind an existing reverse proxy.
 - The lodgely contract tests also run against responses recorded from a
   running lodgely, and OPEN-ITEMS → T-L4 records what the end-to-end run
   verified and what still needs real ad accounts.
