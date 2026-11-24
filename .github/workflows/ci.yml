@@ -73,8 +73,8 @@ jobs:
 
       - name: Web server answers through Caddy
         run: |
-          curl -fsS -o /dev/null http://localhost:8080/up
-          curl -fsS http://localhost:8080/login | grep -q "vigilo"
+          curl -fsS -o /dev/null http://localhost:8090/up
+          curl -fsS http://localhost:8090/login | grep -q "vigilo"
 
       - name: Tests inside the app container
         run: docker compose exec -T app php artisan test --compact

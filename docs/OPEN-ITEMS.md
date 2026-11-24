@@ -196,4 +196,4 @@ Notes from building 0.1.0 in a sandbox. They are not needed on a normal machine.
 - **Never commit that workaround.** The repository Dockerfile must stay clean. It has no `# syntax=` line, so BuildKit uses the local (patched) base images.
 - **PHP version.** The host has PHP 8.3, but the lock file needs 8.4. Run composer, Pest, Pint and Larastan in a `php:8.4-cli-alpine` container with the repo mounted. The container needs `icu-data-full` for German formatting tests.
 - **Tests without a `.env`** pass but print Dotenv warnings; `touch .env` first (the Docker image ships an empty one).
-- **Visual checks:** Playwright with the preinstalled Chromium (`/opt/pw-browsers`) against `http://localhost:8080`.
+- **Visual checks:** Playwright with the preinstalled Chromium (`/opt/pw-browsers`) against `http://localhost:8090`.

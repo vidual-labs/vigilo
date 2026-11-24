@@ -93,8 +93,9 @@ default**, so a fresh install shows realistic clients and findings at once.
 
 ## Quick start (Docker)
 
-This sets vigilo up on a VPS with its own domain and automatic HTTPS.
-To only try it on your own machine, see [Trying it locally](#trying-it-locally).
+This sets vigilo up on a VPS with its own domain and HTTPS, either on a
+server of its own or next to other apps such as lodgely. To only try it on
+your own machine, see [Trying it locally](#trying-it-locally).
 
 > **You need:** a server with at least 512 MB RAM and Docker with Compose v2
 > (`docker compose version` should work), plus a DNS `A` record such as
@@ -119,19 +120,68 @@ cd /opt/vigilo
 cp .env.example .env
 ```
 
-Edit `.env` **before the first start**:
+Edit `.env` **before the first start**. These settings apply to every
+install:
 
 | Variable | Value |
 |---|---|
 | `APP_ENV` | `production` |
 | `APP_URL` | `https://vigilo.your-agency.example` |
 | `SESSION_SECURE_COOKIE` | `true` |
-| `VIGILO_SITE_ADDRESS` | `vigilo.your-agency.example` (enables automatic Let's Encrypt) |
-| `VIGILO_HTTP_PORT` / `VIGILO_HTTPS_PORT` | `80` / `443` |
 | `DB_PASSWORD` | a random value, e.g. from `openssl rand -hex 24` |
 | `ADMIN_EMAIL` | your email |
 | `ADMIN_PASSWORD` | empty = generated and printed once; otherwise ≥ 12 characters (vigilo refuses to start with a weak or default password) |
 | `MAIL_*` | your SMTP server, otherwise digests only go to the log |
+
+Then pick the case that matches your server. Only one program can listen on
+ports 80/443, so vigilo either takes them itself or sits behind the reverse
+proxy that already has them.
+
+**A. vigilo is alone on the server.** vigilo's Caddy serves HTTPS and fetches
+a Let's Encrypt certificate automatically:
+
+| Variable | Value |
+|---|---|
+| `VIGILO_SITE_ADDRESS` | `vigilo.your-agency.example` |
+| `VIGILO_HTTP_PORT` / `VIGILO_HTTPS_PORT` | `80` / `443` |
+
+**B. The server is shared (e.g. with lodgely).** Another reverse proxy
+(lodgely's Caddy, nginx, Traefik …) already owns 80/443 and handles HTTPS.
+vigilo stays on plain HTTP on its own port:
+
+| Variable | Value |
+|---|---|
+| `VIGILO_SITE_ADDRESS` | `:80` (the default) |
+| `VIGILO_HTTP_PORT` | `8090` (the default) — or `127.0.0.1:8090` if the proxy runs directly on the host, so the port is not public (Docker bypasses `ufw`) |
+
+Pick another `VIGILO_HTTP_PORT` if 8090 is taken. Then point the proxy's
+`vigilo.your-agency.example` site at `localhost:8090`, for example in a
+Caddyfile:
+
+```caddyfile
+vigilo.your-agency.example {
+    reverse_proxy localhost:8090
+}
+```
+
+or in nginx (inside a `server` block with your TLS settings):
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8090;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+If the proxy itself runs in a Docker container, `localhost` is that
+container, not the host: use `host.docker.internal:8090` (add
+`extra_hosts: ["host.docker.internal:host-gateway"]` to the proxy's service)
+and keep `VIGILO_HTTP_PORT=8090` without `127.0.0.1`.
+
+Links and cookies follow `APP_URL` and `SESSION_SECURE_COOKIE`, so vigilo
+generates https links even though it receives plain HTTP from the proxy.
 
 ### 3. Start it
 
@@ -197,11 +247,6 @@ cd /opt/vigilo && git pull && docker compose up -d --build
 
 Migrations run on start.
 
-### Behind your own reverse proxy
-
-Skip the 80/443 port mapping: keep `VIGILO_SITE_ADDRESS=:80`, point your
-proxy at port 8080 and set `TRUSTED_PROXIES`.
-
 ### Trying it locally
 
 Clone the repository, then start it with the defaults:
@@ -214,7 +259,7 @@ git clone https://github.com/vidual-labs/vigilo && cd vigilo
 cp .env.example .env && docker compose up -d
 ```
 
-Open **http://localhost:8080** and sign in as described in step 4.
+Open **http://localhost:8090** and sign in as described in step 4.
 
 ### Services
 
@@ -244,7 +289,7 @@ All settings come from `.env` (fully commented in
 | `APP_ENV` | `local` | `production` once served over HTTPS. |
 | `APP_KEY` | *(empty)* | Encryption key. Empty = generated on first start and kept in the `storage` volume (`storage/app/.app-key`). **Back it up**: without it, stored tokens and webhook secrets cannot be decrypted. |
 | `APP_DEBUG` | `false` | Never `true` on a live install. |
-| `APP_URL` | `http://localhost:8080` | Public address; links in mails/webhooks use it. An `https://` URL makes vigilo generate https links. |
+| `APP_URL` | `http://localhost:8090` | Public address; links in mails/webhooks use it. An `https://` URL makes vigilo generate https links. |
 | `APP_LOCALE` / `APP_FALLBACK_LOCALE` | `en` | Default language (`en`, `de`) for guests and new users. |
 | `LOG_CHANNEL`, `LOG_STACK`, `LOG_LEVEL` | `stack`, `single`, `warning` | Laravel logging; the log lives in `storage/logs/laravel.log`. |
 | `TRUSTED_PROXIES` | private ranges | Proxies whose `X-Forwarded-*` headers are trusted. |
@@ -261,7 +306,7 @@ All settings come from `.env` (fully commented in
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `VIGILO_HTTP_PORT` / `VIGILO_HTTPS_PORT` | `8080` / `8443` | Host ports mapped to Caddy. |
+| `VIGILO_HTTP_PORT` / `VIGILO_HTTPS_PORT` | `8090` / `8453` | Host ports mapped to Caddy. |
 | `VIGILO_SITE_ADDRESS` | `:80` | Caddy site address. A domain (e.g. `vigilo.agency.example`) enables automatic Let's Encrypt; map ports 80/443 for that. |
 | `VIGILO_IMAGE_TAG` | `local` | Tag of the locally built images. |
 | `PHP_FPM_MAX_CHILDREN` | `4` | PHP-FPM workers (each ~30–40 MB while busy). |
@@ -478,7 +523,8 @@ Always run them inside the container: `docker compose exec app php artisan …`
 - Serve over HTTPS: set `VIGILO_SITE_ADDRESS=vigilo.your-agency.example`,
   map `VIGILO_HTTP_PORT=80` and `VIGILO_HTTPS_PORT=443`, then set
   `APP_URL=https://…`, `APP_ENV=production` and `SESSION_SECURE_COOKIE=true`.
-  Behind your own reverse proxy, keep `:80` and adjust `TRUSTED_PROXIES`.
+  On a shared server, keep `:80` behind your reverse proxy (see
+  [Quick start](#quick-start-docker), case B).
 - Configure SMTP so digests actually leave the server.
 - Back up the `pgdata` volume (e.g. `docker compose exec postgres pg_dump -U vigilo vigilo`)
   **and** `storage/app/.app-key` from the `storage` volume.
