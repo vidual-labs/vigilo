@@ -93,32 +93,135 @@ default**, so a fresh install shows realistic clients and findings at once.
 
 ## Quick start (Docker)
 
-You need Docker with Compose v2. On a fresh clone:
+This sets vigilo up on a VPS with its own domain and automatic HTTPS.
+To only try it on your own machine, see [Trying it locally](#trying-it-locally).
+
+> **You need:** a server with at least 512 MB RAM and Docker with Compose v2
+> (`docker compose version` should work), plus a DNS `A` record such as
+> `vigilo.your-agency.example` pointing to the server's IP. Ports 80 and 443
+> must be reachable (open them in `ufw` or your provider's firewall).
+
+### 1. Get the code
+
+The images are built from source, so you need a clone:
+
+```bash
+git clone https://github.com/vidual-labs/vigilo /opt/vigilo
+```
+
+```bash
+cd /opt/vigilo
+```
+
+### 2. Configure `.env`
 
 ```bash
 cp .env.example .env
-docker compose up -d
 ```
 
-That is all. The first start builds the images, creates the database,
-generates an application key, creates the first operator and loads seven
-demo clients on simulated connections. When `docker compose ps` shows all
-five services *healthy*, open **http://localhost:8080**.
+Edit `.env` **before the first start**:
 
-The first operator's password is printed once in the app log:
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `production` |
+| `APP_URL` | `https://vigilo.your-agency.example` |
+| `SESSION_SECURE_COOKIE` | `true` |
+| `VIGILO_SITE_ADDRESS` | `vigilo.your-agency.example` (enables automatic Let's Encrypt) |
+| `VIGILO_HTTP_PORT` / `VIGILO_HTTPS_PORT` | `80` / `443` |
+| `DB_PASSWORD` | a random value, e.g. from `openssl rand -hex 24` |
+| `ADMIN_EMAIL` | your email |
+| `ADMIN_PASSWORD` | empty = generated and printed once; otherwise ≥ 12 characters (vigilo refuses to start with a weak or default password) |
+| `MAIL_*` | your SMTP server, otherwise digests only go to the log |
+
+### 3. Start it
+
+```bash
+docker compose up -d --build
+```
+
+The first start builds the images, creates the database, generates an
+application key, creates the first operator and loads seven demo clients on
+simulated connections. This takes a few minutes. Wait until all five
+services show *healthy*:
+
+```bash
+docker compose ps
+```
+
+### 4. Sign in
+
+If you left `ADMIN_PASSWORD` empty, the generated password is printed once in
+the app log:
 
 ```bash
 docker compose logs app | grep -A2 "first operator"
 ```
 
-You will be asked to choose your own password after signing in. (Set
-`ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env` before the first start to pick
-them yourself — vigilo refuses to start with a weak or default password.)
+Open `https://vigilo.your-agency.example` and sign in. You will be asked to
+choose your own password.
 
-Services: `postgres` (PostgreSQL 16), `app` (PHP-FPM), `queue` (database
-queue worker), `scheduler` (daily run, digests, retention) and `caddy` (web
-server, automatic HTTPS when you set a domain). Data lives in the named
-volumes `pgdata` and `storage`.
+### 5. Go live with real data
+
+Add your Google/Meta credentials to `.env` (see
+[Connecting Google Ads](#connecting-google-ads) and
+[Connecting Meta Ads](#connecting-meta-ads)) and set
+`VIGILO_MOCK_MODE=false`. Then remove the demo clients and restart so the
+containers pick up the new environment:
+
+```bash
+docker compose exec app php artisan vigilo:demo:remove
+```
+
+```bash
+docker compose up -d
+```
+
+### 6. Back up
+
+Back up the database **and** the application key. Without the key, stored
+tokens and webhook secrets cannot be decrypted.
+
+```bash
+docker compose exec -T postgres pg_dump -U vigilo vigilo > vigilo-$(date +%F).sql
+```
+
+```bash
+docker compose cp app:/app/storage/app/.app-key ./app-key.backup
+```
+
+### Updating
+
+```bash
+cd /opt/vigilo && git pull && docker compose up -d --build
+```
+
+Migrations run on start.
+
+### Behind your own reverse proxy
+
+Skip the 80/443 port mapping: keep `VIGILO_SITE_ADDRESS=:80`, point your
+proxy at port 8080 and set `TRUSTED_PROXIES`.
+
+### Trying it locally
+
+Clone the repository, then start it with the defaults:
+
+```bash
+git clone https://github.com/vidual-labs/vigilo && cd vigilo
+```
+
+```bash
+cp .env.example .env && docker compose up -d
+```
+
+Open **http://localhost:8080** and sign in as described in step 4.
+
+### Services
+
+`postgres` (PostgreSQL 16), `app` (PHP-FPM), `queue` (database queue worker),
+`scheduler` (daily run, digests, retention) and `caddy` (web server,
+automatic HTTPS when you set a domain). Data lives in the named volumes
+`pgdata` and `storage`.
 
 Run the test suite inside the running install (uses in-memory SQLite and
 refuses to touch the live database):
@@ -126,11 +229,6 @@ refuses to touch the live database):
 ```bash
 docker compose exec app php artisan test
 ```
-
-**Going live:** add your Google/Meta credentials to `.env` (see below), set
-`VIGILO_MOCK_MODE=false`, remove the demo clients with
-`docker compose exec app php artisan vigilo:demo:remove`, and run
-`docker compose up -d` again so the containers pick up the new environment.
 
 ## Configuration reference
 
