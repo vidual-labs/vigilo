@@ -61,6 +61,10 @@ user-facing change gets an entry under **Unreleased**.
 
 ### Fixed
 
+- **Dark mode survives navigation.** Moving between pages with the top menu
+  switched back to the light theme, because Livewire's in-app navigation
+  replaced the `<html>` attributes and dropped the `dark` class. The theme is
+  now re-applied right after each page swap.
 - **No dark flash on light pages in Firefox.** On a dark OS, Firefox showed
   its own dark background until the stylesheet had loaded, then switched to
   the light theme. The page now sets its background and `color-scheme` before
