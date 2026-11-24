@@ -55,3 +55,8 @@ it('shows inherited thresholds with the reader\'s decimal separator', function (
     $this->actingAs($this->operator(['locale' => 'en']))->get('/checks')
         ->assertSee('placeholder="0.15"', false);
 });
+
+it('paints the theme background before the stylesheet loads', function () {
+    $this->get('/login')->assertOk()
+        ->assertSee('html.dark { background-color: #020617; color-scheme: dark; }', false);
+});
