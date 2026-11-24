@@ -9,6 +9,10 @@ user-facing change gets an entry under **Unreleased**.
 
 ### Added
 
+- **`vigilo:user:password EMAIL`** sets a user's password from the command
+  line: asked for twice without echo (so `$` needs no quoting and nothing
+  lands in the shell history), or generated with `--generate` and changed at
+  the next sign-in. Signs the user out of "remember me" on other devices.
 - **Meta conversion action types per connection.** A Meta connection can
   override `VIGILO_META_CONVERSION_ACTION_TYPES` (*Connections* → edit →
   *Conversion action types*), for accounts that optimise for a custom

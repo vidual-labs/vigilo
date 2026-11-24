@@ -137,7 +137,7 @@ install:
 > variable and silently drops it (you will see `The "…" variable is not set`).
 > Use single quotes around such values, e.g. `ADMIN_PASSWORD='Pa$s…'`.
 > `ADMIN_*` is only read when no operator exists yet; changing it later has
-> no effect, so get it right before the first start.
+> no effect; use `vigilo:user:password` (step 4) instead.
 
 Then pick the case that matches your server. Only one program can listen on
 ports 80/443, so vigilo either takes them itself or sits behind the reverse
@@ -215,6 +215,13 @@ docker compose logs app | grep -A2 "first operator"
 
 Open `https://vigilo.your-agency.example` and sign in. You will be asked to
 choose your own password.
+
+Locked out, or the password from `.env` does not work? Set a new one (asked
+for without echo, so `$` and other characters need no quoting):
+
+```bash
+docker compose exec app php artisan vigilo:user:password you@your-agency.example
+```
 
 ### 5. Go live with real data
 
@@ -518,6 +525,7 @@ Always run them inside the container: `docker compose exec app php artisan …`
 | `vigilo:run [--client=ID] [--no-fetch] [--digest] [--sync]` | Fetch + checks now (queued; `--sync` inline). Digest only with `--digest` (the scheduled run sends it itself). |
 | `vigilo:digest` | Send the digest to everyone who receives it. |
 | `vigilo:user:create EMAIL [--role=operator\|viewer] [--name=] [--password=]` | Create a user; prints a generated password. |
+| `vigilo:user:password EMAIL [--generate]` | Set a user's password: asked for without echo, or generated and printed once (then changed at the next sign-in). |
 | `vigilo:admin:ensure` | Create the first operator from `ADMIN_*` (run by the entrypoint). |
 | `vigilo:demo:seed` / `vigilo:demo:remove` | Load / remove the demo clients (mock mode). |
 | `vigilo:prune` | Apply the retention windows (runs daily). |
