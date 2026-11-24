@@ -78,6 +78,54 @@ it('creates users from the command line', function () {
     expect(User::query()->where('email', 'viewer@agency.example')->value('role'))->toBe(UserRole::Viewer);
 });
 
+it('sets a password typed at the prompt, "$" included', function () {
+    $user = $this->operator(['email' => 'ops@agency.example', 'must_change_password' => true]);
+    $oldToken = $user->remember_token;
+
+    $this->artisan('vigilo:user:password', ['email' => 'Ops@Agency.example'])
+        ->expectsQuestion('New password', 'Kupfer$lKessel-Wind-42')
+        ->expectsQuestion('Repeat the password', 'Kupfer$lKessel-Wind-42')
+        ->expectsOutputToContain('Password set for ops@agency.example')
+        ->assertSuccessful();
+
+    $user->refresh();
+    expect(Hash::check('Kupfer$lKessel-Wind-42', $user->password))->toBeTrue()
+        ->and($user->must_change_password)->toBeFalse()
+        ->and($user->remember_token)->not->toBe($oldToken);
+});
+
+it('generates a password that must be changed at the next sign-in', function () {
+    $user = $this->operator(['email' => 'ops@agency.example']);
+
+    $this->artisan('vigilo:user:password', ['email' => 'ops@agency.example', '--generate' => true])
+        ->expectsOutputToContain('Password:')
+        ->assertSuccessful();
+
+    $user->refresh();
+    expect(Hash::check('correct-horse-battery-9', $user->password))->toBeFalse()
+        ->and($user->must_change_password)->toBeTrue();
+});
+
+it('changes nothing for a weak or mistyped password or an unknown email', function () {
+    $user = $this->operator(['email' => 'ops@agency.example']);
+
+    $this->artisan('vigilo:user:password', ['email' => 'ops@agency.example'])
+        ->expectsQuestion('New password', 'changeme')
+        ->assertFailed();
+
+    $this->artisan('vigilo:user:password', ['email' => 'ops@agency.example'])
+        ->expectsQuestion('New password', 'Kupfer-Kessel-Wind-42')
+        ->expectsQuestion('Repeat the password', 'Kupfer-Kessel-Wind-43')
+        ->expectsOutputToContain('do not match')
+        ->assertFailed();
+
+    $this->artisan('vigilo:user:password', ['email' => 'nobody@agency.example'])
+        ->expectsOutputToContain('No user with')
+        ->assertFailed();
+
+    expect(Hash::check('correct-horse-battery-9', $user->refresh()->password))->toBeTrue();
+});
+
 it('runs a full cycle from the command line', function () {
     $this->artisan('vigilo:demo:seed')->assertSuccessful();
     $this->artisan('vigilo:demo:seed')->expectsOutputToContain('already loaded')->assertSuccessful();

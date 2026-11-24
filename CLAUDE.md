@@ -146,6 +146,7 @@ docker compose exec app php artisan test                # tests (in-memory SQLit
 docker compose exec app php artisan vigilo:run --sync   # fetch + checks now
 docker compose exec app php artisan vigilo:digest       # send digests now
 docker compose exec app php artisan vigilo:demo:remove  # drop demo clients
+docker compose exec app php artisan vigilo:user:password EMAIL  # set a password (hidden prompt)
 docker compose up -d --build                            # after code changes
 
 # Local
