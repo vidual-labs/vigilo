@@ -61,6 +61,10 @@ user-facing change gets an entry under **Unreleased**.
 
 ### Fixed
 
+- **No dark flash on light pages in Firefox.** On a dark OS, Firefox showed
+  its own dark background until the stylesheet had loaded, then switched to
+  the light theme. The page now sets its background and `color-scheme` before
+  the first paint.
 - **https behind another reverse proxy.** vigilo's Caddy dropped the outer
   proxy's `X-Forwarded-Proto`, so vigilo treated every request as plain http
   and, for example, sent the browser back to an `http://` URL after a failed
